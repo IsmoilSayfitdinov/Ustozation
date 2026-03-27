@@ -11,7 +11,11 @@ const NAV_LINKS = [
   { label: 'FAQ', href: '#faq' },
 ];
 
-const Navbar = () => {
+interface NavbarProps {
+  onAuth?: () => void;
+}
+
+const Navbar = ({ onAuth }: NavbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
@@ -86,7 +90,7 @@ const Navbar = () => {
           {/* Desktop Button */}
           <div className="hidden md:block">
             <button 
-              onClick={() => navigate('/login')}
+              onClick={() => onAuth ? onAuth() : navigate('/login')}
               className="flex items-center gap-3 btn-shimmer text-white px-8 py-3 rounded-xl font-headline font-black text-[12px] uppercase tracking-[0.2em] hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 transition-all duration-500 cursor-pointer border-none relative overflow-hidden group"
             >
               <LogIn color='white' size={18} className="transition-transform duration-500 group-hover:translate-x-1"/>
@@ -148,7 +152,8 @@ const Navbar = () => {
           <div className={`mt-auto pt-10 transition-all duration-700 delay-500 ${menuOpen ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <button 
               onClick={() => {
-                navigate('/login');
+                if (onAuth) onAuth();
+                else navigate('/login');
                 setMenuOpen(false);
               }}
               className="w-full flex items-center justify-center gap-4 btn-shimmer text-white py-5 rounded-2xl font-headline font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all duration-300"
