@@ -1,38 +1,26 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import AuthLayout from './AuthLayout';
 import { loginSchema, type LoginSchema } from '@/schemas/auth/login';
+import { useLogin } from '@/hooks/useAuth';
 
-interface LoginProps {
-  onRegister?: () => void;
-  onLogin?: (data: LoginSchema) => void;
-}
-
-const Login = ({ onRegister, onLogin }: LoginProps) => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const loginMutation = useLogin();
 
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginSchema) => {
-    // Simulate API call
-    console.log('Logging in...', data);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    if (onLogin) {
-      onLogin(data);
-    } else {
-      navigate('/dashboard');
-    }
+  const onSubmit = (data: LoginSchema) => {
+    loginMutation.mutate(data);
   };
 
   return (
@@ -52,10 +40,10 @@ const Login = ({ onRegister, onLogin }: LoginProps) => {
             <label className="text-sm font-bold text-[#1C2434] ml-1">
               Foydalanuvchi nomi
             </label>
-            <input 
+            <input
               {...register('username')}
-              type="text" 
-              placeholder="Login" 
+              type="text"
+              placeholder="Foydalanuvchi nomi"
               className={`w-full px-6 py-4 bg-[#F2F4F7] rounded-2xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] ${
                 errors.username ? 'ring-2 ring-red-500/50' : ''
               }`}
@@ -70,15 +58,15 @@ const Login = ({ onRegister, onLogin }: LoginProps) => {
               Parol
             </label>
             <div className="relative">
-              <input 
+              <input
                 {...register('password')}
-                type={showPassword ? "text" : "password"} 
-                placeholder="........" 
+                type={showPassword ? "text" : "password"}
+                placeholder="........"
                 className={`w-full px-6 py-4 bg-[#F2F4F7] rounded-2xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] ${
                   errors.password ? 'ring-2 ring-red-500/50' : ''
                 }`}
               />
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-primary transition-colors cursor-pointer"
@@ -91,23 +79,20 @@ const Login = ({ onRegister, onLogin }: LoginProps) => {
             )}
           </div>
 
-          <button 
-            disabled={isSubmitting}
+          <button
+            disabled={loginMutation.isPending}
             className="w-full bg-primary text-white py-5 rounded-2xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 transition-all duration-300 cursor-pointer border-none shadow-lg shadow-primary/20 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Kutilmoqda..." : "Kirish"}
+            {loginMutation.isPending ? "Kutilmoqda..." : "Kirish"}
           </button>
         </form>
 
         <div className="text-center">
           <p className="text-on-surface-variant font-medium text-sm">
             Hisobingiz yo'qmi?{' '}
-            <button 
-              onClick={onRegister}
-              className="text-primary font-bold hover:underline cursor-pointer"
-            >
+            <Link to="/register" className="text-primary font-bold hover:underline">
               Ro'yxatdan o'tish
-            </button>
+            </Link>
           </p>
         </div>
       </div>

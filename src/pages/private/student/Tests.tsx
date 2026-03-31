@@ -1,13 +1,66 @@
-import React, { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { BookOpen, Star, Clock, BarChart3 } from 'lucide-react';
 import TestHeaderCard from '@/components/private/student/Tests/TestHeaderCard';
 import TestTypeCard from '@/components/private/student/Tests/TestTypeCard';
 import TestHistoryItem from '@/components/private/student/Tests/TestHistoryItem';
 import TestPlayer from '@/components/private/student/Tests/TestPlayer';
-import { TEST_TYPES, TEST_HISTORY } from '@/data/student';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuizTypes, useCourseQuizzes } from '@/hooks/useQuizzes';
+import { useDashboard } from '@/hooks/useAnalytics';
+import { useCourses } from '@/hooks/useCourses';
+
+const TYPE_ICONS: Record<string, { icon: typeof BookOpen; iconBg: string; iconColor: string }> = {
+  grammar: { icon: BookOpen, iconBg: '#F973161A', iconColor: '#F97316' },
+  vocabulary: { icon: Star, iconBg: '#F973161A', iconColor: '#F97316' },
+  listening: { icon: Clock, iconBg: '#10B9811A', iconColor: '#10B981' },
+  reading: { icon: BarChart3, iconBg: '#EAB3081A', iconColor: '#EAB308' },
+};
+const DEFAULT_ICON = { icon: BookOpen, iconBg: '#F973161A', iconColor: '#F97316' };
 
 const StudentTests = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+
+  const { data: dashboard } = useDashboard();
+  const { data: courses } = useCourses();
+  const { data: quizTypes, isLoading: typesLoading } = useQuizTypes();
+
+  const enrolledCourse = useMemo(() => {
+    if (!courses || !dashboard?.course_name) return null;
+    return courses.find(c => c.title === dashboard.course_name) ?? null;
+  }, [courses, dashboard]);
+
+  const { data: courseQuizzes, isLoading: quizzesLoading } = useCourseQuizzes(enrolledCourse?.id ?? 0);
+
+  const isLoading = typesLoading || quizzesLoading;
+
+  // Group quizzes by type with counts
+  const quizzesByType = useMemo(() => {
+    if (!quizTypes || !courseQuizzes) return [];
+    return quizTypes.map(qt => {
+      const quizzes = courseQuizzes.filter(q => q.quiz_type.id === qt.id);
+      const iconData = TYPE_ICONS[qt.slug] || DEFAULT_ICON;
+      return {
+        id: qt.id,
+        name: qt.name,
+        description: qt.description,
+        count: quizzes.length,
+        passedCount: 0, // API doesn't provide per-type pass count directly
+        failedCount: 0,
+        ...iconData,
+        quizzes,
+      };
+    }).filter(qt => qt.count > 0);
+  }, [quizTypes, courseQuizzes]);
+
+  const allQuizzes = useMemo(() => courseQuizzes ?? [], [courseQuizzes]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-4 border-surface-tint border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -16,8 +69,8 @@ const StudentTests = () => {
       </div>
 
       <AnimatePresence mode="wait">
-        {!isPlaying ? (
-          <motion.div 
+        {!selectedQuiz ? (
+          <motion.div
             key="list"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -25,56 +78,75 @@ const StudentTests = () => {
             className='bg-[#F8F9FA] p-5 md:p-8 rounded-3xl md:rounded-[40px] space-y-8 md:space-y-12'
           >
             {/* Header Featured Card */}
-            <div onClick={() => setIsPlaying(true)} className="cursor-pointer transition-transform hover:scale-[1.02]">
-              <TestHeaderCard />
-            </div>
+            {allQuizzes.length > 0 && (
+              <div onClick={() => setSelectedQuiz(allQuizzes[0])} className="cursor-pointer transition-transform hover:scale-[1.02]">
+                <TestHeaderCard />
+              </div>
+            )}
 
-            {/* Test Types Section */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-[#141F38]">Test turlari</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {TEST_TYPES.map((test, index) => (
-                  <div key={index} onClick={() => setIsPlaying(true)} className="cursor-pointer transition-transform hover:scale-[1.02]">
-                    <TestTypeCard 
-                      icon={test.icon}
-                      title={test.title}
-                      subtitle={test.subtitle}
-                      count={test.count}
-                      iconBg={test.iconBg}
-                      iconColor={test.iconColor}
+            {/* Quiz Types Section */}
+            {quizzesByType.length > 0 && (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-[#141F38]">Test turlari</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {quizzesByType.map((qt) => (
+                    <TestTypeCard
+                      key={qt.id}
+                      icon={qt.icon}
+                      title={qt.name}
+                      subtitle={qt.description}
+                      count={qt.count}
+                      passedCount={qt.passedCount}
+                      failedCount={qt.failedCount}
+                      iconBg={qt.iconBg}
+                      iconColor={qt.iconColor}
+                      onClick={() => {
+                        if (qt.quizzes.length > 0) setSelectedQuiz(qt.quizzes[0]);
+                      }}
                     />
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Test History Section */}
-            <div className="space-y-6">
-              <h3 className="text-xl font-bold text-[#141F38]">Test tarixi</h3>
-              <div className="space-y-4">
-                {TEST_HISTORY.map((history, index) => (
-                  <TestHistoryItem 
-                    key={index}
-                    percentage={history.percentage}
-                    name={history.name}
-                    date={history.date}
-                    ball={history.ball}
-                    score={history.score}
-                    time={history.time}
-                    color={history.color}
-                  />
-                ))}
+            {/* Available Quizzes / Test History */}
+            {allQuizzes.length > 0 ? (
+              <div className="space-y-6">
+                <h3 className="text-xl font-bold text-[#141F38]">Test tarixi</h3>
+                <div className="space-y-4">
+                  {allQuizzes.map((quiz) => {
+                    const perc = quiz.max_score > 0 ? Math.round((quiz.passing_score / quiz.max_score) * 100) : 0;
+                    return (
+                      <TestHistoryItem
+                        key={quiz.id}
+                        percentage={perc}
+                        name={quiz.title}
+                        date={quiz.quiz_type.name}
+                        ball={quiz.passing_score}
+                        score={`${quiz.passing_score}/${quiz.max_score}`}
+                        time={`${Math.floor(quiz.time_limit / 60)}:${String(quiz.time_limit % 60).padStart(2, '0')}`}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center py-20 bg-white rounded-[32px] border border-dashed border-[#F2F4F7]">
+                <p className="text-[#98A2B3] font-bold">Hozircha testlar mavjud emas</p>
+              </div>
+            )}
           </motion.div>
         ) : (
-          <motion.div 
+          <motion.div
             key="player"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
           >
-            <TestPlayer onClose={() => setIsPlaying(false)} />
+            <TestPlayer
+              quizId={selectedQuiz.id}
+              onClose={() => setSelectedQuiz(null)}
+            />
           </motion.div>
         )}
       </AnimatePresence>

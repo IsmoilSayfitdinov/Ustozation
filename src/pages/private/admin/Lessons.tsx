@@ -1,193 +1,388 @@
-import { useState } from 'react';
-import { Plus, X, Search, Book, Headphones, Eye, Save } from 'lucide-react';
-import LessonCard from '@/components/private/admin/Lessons/LessonCard';
+import React, { useState } from 'react';
+import { Target, Package, BookOpen, Plus, Trash2, Edit2, ChevronDown, FileText, Layers, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import CreateLevelDialog from '@/components/private/admin/Lessons/CreateLevelDialog';
+import CreateModuleDialog from '@/components/private/admin/Lessons/CreateModuleDialog';
+import CreateLessonDialog from '@/components/private/admin/Lessons/CreateLessonDialog';
+import EditModuleDialog from '@/components/private/admin/Lessons/EditModuleDialog';
+import EditLessonDialog from '@/components/private/admin/Lessons/EditLessonDialog';
+import { useLevels, useLevelDetail, useCreateLevel, useCreateModule, useCreateLesson, useDeleteModule, useDeleteLesson, useUpdateModule, useUpdateLesson } from '@/hooks/useCourses';
+import type { Module as ModuleType, Lesson } from '@/types/api';
 
-const initialLessons = [
-  { id: 1, title: 'Salomlashish iboralari', type: 'text', duration: '15 daq', students: 142, status: 'Faol' },
-  { id: 2, title: 'O\'zini tanishtirish', type: 'text', duration: '20 daq', students: 128, status: 'Faol' },
-  { id: 3, title: 'Listening: Daily Greetings', type: 'audio', duration: '10 daq', students: 95, status: 'Faol' },
-  { id: 4, title: 'Present Simple', type: 'text', duration: '25 daq', students: 0, status: 'Qoralama' },
-  { id: 5, title: 'Listening: At the Market', type: 'audio', duration: '12 daq', students: 82, status: 'Faol' },
-  { id: 6, title: 'Describing People', type: 'text', duration: '18 daq', students: 0, status: 'Qoralama' },
-];
+const levelColors: Record<string, { iconBg: string }> = {
+  'Beginner': { iconBg: 'bg-emerald-400' },
+  'Elementary': { iconBg: 'bg-blue-500' },
+  'Pre-Intermediate': { iconBg: 'bg-cyan-500' },
+  'Intermediate': { iconBg: 'bg-orange-500' },
+  'Upper-Intermediate': { iconBg: 'bg-purple-500' },
+  'Advanced': { iconBg: 'bg-pink-500' },
+};
 
-const Lessons = () => {
-  const [lessons, setLessons] = useState(initialLessons);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [activeTab, setActiveTab] = useState('Barchasi');
-  const [newLesson, setNewLesson] = useState({ title: '', type: 'text' });
+const LevelCard = ({ levelId }: { levelId: number }) => {
+  const { data: level, isLoading } = useLevelDetail(levelId);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<number[]>([]);
 
-  const filteredLessons = lessons.filter(lesson => {
-    if (activeTab === 'Barchasi') return true;
-    if (activeTab === 'Matn') return lesson.type === 'text';
-    if (activeTab === 'Audio') return lesson.type === 'audio';
-    return true;
-  });
+  // Create dialogs
+  const [isModuleDialogOpen, setModuleDialogOpen] = useState(false);
+  const [isLessonDialogOpen, setLessonDialogOpen] = useState(false);
+  const [activeModuleId, setActiveModuleId] = useState<number | null>(null);
 
-  const handleAddLesson = () => {
-    if (newLesson.title) {
-      setLessons([
-        { 
-          id: Date.now(), 
-          title: newLesson.title, 
-          type: newLesson.type as 'text' | 'audio', 
-          duration: '0 daq', 
-          students: 0, 
-          status: 'Qoralama' 
-        },
-        ...lessons
-      ]);
-      setNewLesson({ title: '', type: 'text' });
-      setShowAddForm(false);
-    }
+  // Edit dialogs
+  const [editingModule, setEditingModule] = useState<ModuleType | null>(null);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+
+  const createModuleMutation = useCreateModule();
+  const createLessonMutation = useCreateLesson();
+  const updateModuleMutation = useUpdateModule();
+  const updateLessonMutation = useUpdateLesson();
+  const deleteModuleMutation = useDeleteModule();
+  const deleteLessonMutation = useDeleteLesson();
+
+  if (isLoading || !level) {
+    return (
+      <div className="bg-white rounded-[24px] p-8 border border-[#E4E7EC] flex items-center justify-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 text-[#F97316] animate-spin" />
+        </div>
+        <p className="text-sm font-bold text-[#98A2B3]">Daraja yuklanmoqda...</p>
+      </div>
+    );
+  }
+
+  const colors = levelColors[level.name] || { iconBg: 'bg-gray-500' };
+  const totalLessons = level.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+
+  const toggleModule = (id: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpandedModules(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]);
+  };
+
+  const handleCreateModule = (data: { name: string; description: string }) => {
+    createModuleMutation.mutate(
+      { levelId: level.id, data: { title: data.name, description: data.description || '', order: level.modules.length + 1 } },
+      { onSuccess: () => setModuleDialogOpen(false) }
+    );
+  };
+
+  const handleCreateLesson = (data: { name: string; description: string }) => {
+    if (!activeModuleId) return;
+    const mod = level.modules.find(m => m.id === activeModuleId);
+    createLessonMutation.mutate(
+      { moduleId: activeModuleId, data: { title: data.name, description: data.description || '', order: (mod?.lessons.length ?? 0) + 1 } },
+      { onSuccess: () => { setLessonDialogOpen(false); } }
+    );
+  };
+
+  const handleUpdateModule = (data: { title: string; description: string }) => {
+    if (!editingModule) return;
+    updateModuleMutation.mutate(
+      { id: editingModule.id, data },
+      { onSuccess: () => setEditingModule(null) }
+    );
+  };
+
+  const handleUpdateLesson = (data: { title: string; description: string }) => {
+    if (!editingLesson) return;
+    updateLessonMutation.mutate(
+      { id: editingLesson.id, data },
+      { onSuccess: () => setEditingLesson(null) }
+    );
   };
 
   return (
-    <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out pb-12">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <h2 className="text-3xl md:text-4xl font-black text-[#1D2939] tracking-tight">Darslar</h2>
-        <button 
-          onClick={() => setShowAddForm(true)}
-          className="flex items-center justify-center gap-2 bg-primary text-white px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-sm hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-95 group w-full sm:w-auto"
+    <>
+      <div className="bg-white rounded-[24px] shadow-sm border border-[#E4E7EC] overflow-hidden transition-all duration-300">
+        {/* Level Header */}
+        <div
+          className="p-6 flex items-center justify-between cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+          onClick={() => setIsExpanded(!isExpanded)}
         >
-          <Plus className="w-4 h-4 md:w-5 md:h-5 transition-transform group-hover:rotate-90" />
-          Yangi dars
+          <div className="flex items-start gap-4">
+            <div className={cn("w-14 h-14 rounded-[16px] flex items-center justify-center shrink-0 shadow-inner", colors.iconBg)}>
+              <Target className="w-7 h-7 text-white opacity-90" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-[#1C2434] tracking-tight">{level.name}</h3>
+              <p className="text-sm font-medium text-[#667085] mb-2">{level.description}</p>
+              <div className="flex items-center gap-3 text-xs font-bold text-[#98A2B3]">
+                <span className="flex items-center gap-1"><Layers className="w-3.5 h-3.5" /> {level.modules.length} ta modul</span>
+                <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {totalLessons} ta dars</span>
+              </div>
+            </div>
+          </div>
+          <div className={cn("p-2 text-[#98A2B3] transition-transform duration-300", isExpanded && "rotate-180")}>
+            <ChevronDown className="w-5 h-5" />
+          </div>
+        </div>
+
+        {/* Modules Area */}
+        {isExpanded && (
+          <div className="px-6 pb-6 pt-2 border-t border-[#F2F4F7] bg-[#FCFCFD]">
+            <div className="flex items-center justify-between mb-4 mt-2">
+              <h4 className="text-sm font-black text-[#1C2434] uppercase tracking-wider">Modullar</h4>
+              <button
+                onClick={() => setModuleDialogOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F97316] text-white hover:bg-[#EA580C] rounded-lg text-xs font-bold transition-colors shadow-sm"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Modul qo'shish
+              </button>
+            </div>
+
+            {level.modules.length === 0 ? (
+              <div className="bg-white border border-dashed border-[#E4E7EC] rounded-2xl p-8 text-center">
+                <div className="w-12 h-12 mx-auto rounded-full bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center mb-3">
+                  <Package className="w-6 h-6 text-[#F97316]" />
+                </div>
+                <p className="text-sm font-bold text-[#667085]">Hali modullar yo'q</p>
+                <p className="text-xs text-[#98A2B3] mt-1">Yuqoridagi "Modul qo'shish" tugmasini bosing</p>
+              </div>
+            ) : (
+              <div className="space-y-3 pl-4 border-l-2 border-[#F2F4F7] ml-6">
+                {level.modules.map(module => {
+                  const isModuleExpanded = expandedModules.includes(module.id);
+
+                  return (
+                    <div key={module.id} className="bg-white border border-[#E4E7EC] rounded-2xl overflow-hidden shadow-sm">
+                      {/* Module Header */}
+                      <div
+                        className="p-4 flex items-center justify-between cursor-pointer hover:bg-[#F9FAFB] transition-colors"
+                        onClick={(e) => toggleModule(module.id, e)}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 rounded-xl bg-[#FFF5F0] flex items-center justify-center shrink-0">
+                            <Layers className="w-5 h-5 text-[#F97316]" />
+                          </div>
+                          <div>
+                            <h5 className="font-bold text-[#1C2434]">{module.title}</h5>
+                            <p className="text-xs font-bold text-[#98A2B3]">{module.lessons.length} ta dars</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <button
+                            className="p-1.5 text-[#98A2B3] hover:text-[#F97316] hover:bg-[#FFF5F0] rounded-lg transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setEditingModule(module); }}
+                            title="Tahrirlash"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            className="p-1.5 text-[#98A2B3] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`"${module.title}" modulini o'chirishni xohlaysizmi?`)) {
+                                deleteModuleMutation.mutate(module.id);
+                              }
+                            }}
+                            title="O'chirish"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <div className="w-px h-5 bg-[#F2F4F7] mx-1" />
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setActiveModuleId(module.id); setLessonDialogOpen(true); }}
+                            className="flex items-center gap-1 px-2.5 py-1 text-[#F97316] text-xs font-bold hover:bg-[#FFF5F0] rounded-lg transition-colors"
+                          >
+                            <Plus className="w-3.5 h-3.5" /> Dars
+                          </button>
+                          <div className={cn("p-1.5 text-[#98A2B3] transition-transform duration-300", isModuleExpanded && "rotate-180")}>
+                            <ChevronDown className="w-4 h-4" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Lessons */}
+                      {isModuleExpanded && (
+                        <div className="px-4 pb-4 bg-[#F9FAFB] border-t border-[#F2F4F7]">
+                          <div className="pt-2">
+                            {module.lessons.length === 0 ? (
+                              <div className="text-center py-6">
+                                <p className="text-xs font-medium text-[#98A2B3]">Hozircha darslar yo'q</p>
+                              </div>
+                            ) : (
+                              module.lessons.map((lesson, idx) => (
+                                <div key={lesson.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-white rounded-xl transition-colors group">
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-6 h-6 rounded-full bg-[#FFF5F0] text-[#F97316] flex items-center justify-center text-xs font-black">
+                                      {idx + 1}
+                                    </div>
+                                    <div className="text-[#F97316]">
+                                      <FileText className="w-4 h-4" />
+                                    </div>
+                                    <p className="text-sm font-bold text-[#1C2434]">{lesson.title}</p>
+                                  </div>
+                                  <div className="opacity-0 group-hover:opacity-100 flex items-center gap-1 transition-all">
+                                    <button
+                                      className="p-1.5 text-[#98A2B3] hover:text-[#F97316] hover:bg-[#FFF5F0] rounded-md transition-colors"
+                                      onClick={() => setEditingLesson(lesson)}
+                                      title="Tahrirlash"
+                                    >
+                                      <Edit2 className="w-3.5 h-3.5" />
+                                    </button>
+                                    <button
+                                      className="p-1.5 text-[#98A2B3] hover:text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                                      onClick={() => {
+                                        if (window.confirm(`"${lesson.title}" darsini o'chirishni xohlaysizmi?`)) {
+                                          deleteLessonMutation.mutate(lesson.id);
+                                        }
+                                      }}
+                                      title="O'chirish"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Create Dialogs */}
+      <CreateModuleDialog
+        isOpen={isModuleDialogOpen}
+        onClose={() => setModuleDialogOpen(false)}
+        onSubmit={handleCreateModule}
+        isPending={createModuleMutation.isPending}
+      />
+      <CreateLessonDialog
+        isOpen={isLessonDialogOpen}
+        onClose={() => setLessonDialogOpen(false)}
+        onSubmit={handleCreateLesson}
+        isPending={createLessonMutation.isPending}
+      />
+
+      {/* Edit Dialogs */}
+      <EditModuleDialog
+        isOpen={editingModule !== null}
+        onClose={() => setEditingModule(null)}
+        onSubmit={handleUpdateModule}
+        isPending={updateModuleMutation.isPending}
+        initialData={editingModule ? { title: editingModule.title, description: editingModule.description } : null}
+      />
+      <EditLessonDialog
+        isOpen={editingLesson !== null}
+        onClose={() => setEditingLesson(null)}
+        onSubmit={handleUpdateLesson}
+        isPending={updateLessonMutation.isPending}
+        initialData={editingLesson ? { title: editingLesson.title, description: editingLesson.description } : null}
+      />
+    </>
+  );
+};
+
+const AdminLessons = () => {
+  const { data: levels, isLoading } = useLevels();
+  const [isLevelDialogOpen, setLevelDialogOpen] = useState(false);
+  const createLevelMutation = useCreateLevel();
+
+  const handleCreateLevel = (data: { name: string; description: string; order: number }) => {
+    createLevelMutation.mutate(data, {
+      onSuccess: () => setLevelDialogOpen(false),
+    });
+  };
+
+  const dynamicStats = [
+    { label: 'Levellar', value: (levels?.length ?? 0).toString(), icon: <Target className="w-5 h-5 text-orange-500" />, bg: 'bg-orange-50' },
+    { label: 'Modullar', value: '—', icon: <Package className="w-5 h-5 text-blue-500" />, bg: 'bg-blue-50' },
+    { label: 'Darslar', value: '—', icon: <BookOpen className="w-5 h-5 text-emerald-500" />, bg: 'bg-emerald-50' },
+  ];
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12 w-full mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h1 className="text-3xl font-extrabold font-headline tracking-tighter text-[#1C2434]">
+          O'quv dasturi
+        </h1>
+        <button
+          onClick={() => setLevelDialogOpen(true)}
+          className="flex items-center justify-center gap-2 bg-[#F97316] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all w-full sm:w-auto"
+        >
+          <Plus className="w-5 h-5" />
+          Yangi daraja
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-8">
-        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[32px] border border-[#F2F4F7] flex items-center gap-4 md:gap-6 group hover:shadow-xl transition-all h-full">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-primary flex items-center justify-center">
-              <Book className="w-4 h-4 md:w-6 md:h-6 text-white" />
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        {dynamicStats.map((stat, idx) => (
+          <div key={idx} className="bg-white rounded-[24px] p-6 border border-[#F2F4F7] shadow-sm flex items-center gap-4 hover:shadow-lg transition-shadow">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${stat.bg}`}>
+              {stat.icon}
+            </div>
+            <div>
+              <p className="text-2xl font-black text-[#141F38] tracking-tight">{stat.value}</p>
+              <p className="text-[#667085] text-xs font-bold mt-0.5">{stat.label}</p>
             </div>
           </div>
-          <div>
-            <h3 className="text-xl md:text-2xl font-black text-[#1D2939]">4</h3>
-            <p className="text-[10px] md:text-[11px] font-black text-[#98A2B3] uppercase tracking-widest mt-0.5">Matn-darslari</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[32px] border border-[#F2F4F7] flex items-center gap-4 md:gap-6 group hover:shadow-xl transition-all h-full">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[#002D5B]/10 flex items-center justify-center shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#002D5B] flex items-center justify-center">
-               <Headphones className="w-4 h-4 md:w-6 md:h-6 text-white" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-xl md:text-2xl font-black text-[#1D2939]">2</h3>
-            <p className="text-[10px] md:text-[11px] font-black text-[#98A2B3] uppercase tracking-widest mt-0.5">Audio-darslar</p>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 md:p-8 rounded-3xl md:rounded-[32px] border border-[#F2F4F7] flex items-center gap-4 md:gap-6 group hover:shadow-xl transition-all h-full">
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-[#12B76A]/10 flex items-center justify-center shrink-0">
-            <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-[#12B76A] flex items-center justify-center">
-               <Eye className="w-4 h-4 md:w-6 md:h-6 text-white" />
-            </div>
-          </div>
-          <div>
-            <h3 className="text-xl md:text-2xl font-black text-[#1D2939]">4</h3>
-            <p className="text-[10px] md:text-[11px] font-black text-[#98A2B3] uppercase tracking-widest mt-0.5">Faol darslar</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Tabs and Filters */}
-      <div className="flex items-center gap-1 md:gap-2 p-1.5 bg-white w-full sm:w-fit rounded-2xl border border-[#F2F4F7] overflow-x-auto no-scrollbar">
-        {['Barchasi', 'Matn', 'Audio'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 sm:flex-none px-4 md:px-8 py-2 md:py-2.5 rounded-xl font-black text-[10px] md:text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-1.5 md:gap-2 whitespace-nowrap ${
-              activeTab === tab 
-                ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                : 'text-[#667085] hover:text-[#1D2939]'
-            }`}
-          >
-            {tab === 'Matn' && <Book className="w-3 h-3 md:w-3.5 md:h-3.5" />}
-            {tab === 'Audio' && <Headphones className="w-3 h-3 md:w-3.5 md:h-3.5" />}
-            {tab}
-          </button>
         ))}
       </div>
 
-      {/* Inline Add/Edit Form */}
-      {showAddForm && (
-        <div className="bg-white p-6 md:p-10 rounded-3xl md:rounded-[40px] border-2 border-primary/20 shadow-2xl shadow-primary/5 animate-in zoom-in-95 duration-300 relative">
-          <button 
-            onClick={() => setShowAddForm(false)}
-            className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-xl hover:bg-[#F9FAFB] text-[#98A2B3] transition-all"
-          >
-            <X className="w-4 h-4 md:w-5 md:h-5" />
-          </button>
-
-          <h3 className="text-xl md:text-2xl font-black text-[#1D2939] mb-6 md:mb-8">Yangi dars qo'shish</h3>
-          
-          <div className="space-y-4 md:space-y-6">
-            <div className="space-y-2">
-              <label className="text-[10px] md:text-[11px] font-black text-[#98A2B3] uppercase tracking-widest ml-4">Dars nomi</label>
-              <input 
-                type="text" 
-                value={newLesson.title}
-                onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
-                placeholder="Dars nomini kiriting..." 
-                className="w-full bg-[#F9FAFB] border-none rounded-[16px] md:rounded-[20px] py-3 md:py-4 px-4 md:px-6 text-xs md:text-sm font-bold text-[#1D2939] focus:ring-2 focus:ring-primary/20 transition-all outline-none"
-              />
+      {/* Levels List */}
+      {isLoading ? (
+        <div className="bg-white rounded-[40px] border border-[#F2F4F7] overflow-hidden">
+          <div className="flex flex-col items-center justify-center py-28 px-6">
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center">
+                <Loader2 className="w-10 h-10 text-[#F97316] animate-spin" />
+              </div>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-center gap-3 md:gap-4">
-              <button
-                onClick={() => setNewLesson({ ...newLesson, type: 'text' })}
-                className={`w-full sm:flex-1 flex items-center justify-center gap-2 md:gap-3 py-3 md:py-4 rounded-[16px] md:rounded-[20px] font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border-2 ${
-                  newLesson.type === 'text' 
-                    ? 'bg-primary text-white border-primary shadow-xl shadow-primary/20' 
-                    : 'bg-white text-[#667085] border-[#F2F4F7] hover:border-primary/30'
-                }`}
-              >
-                <Book className="w-4 h-4 md:w-5 md:h-5" />
-                Matn
-              </button>
-              <button
-                onClick={() => setNewLesson({ ...newLesson, type: 'audio' })}
-                className={`w-full sm:flex-1 flex items-center justify-center gap-2 md:gap-3 py-3 md:py-4 rounded-[16px] md:rounded-[20px] font-black text-[10px] md:text-xs uppercase tracking-widest transition-all border-2 ${
-                  newLesson.type === 'audio' 
-                    ? 'bg-[#002D5B] text-white border-[#002D5B] shadow-xl shadow-[#002D5B]/20' 
-                    : 'bg-white text-[#667085] border-[#F2F4F7] hover:border-[#002D5B]/30'
-                }`}
-              >
-                <Headphones className="w-4 h-4 md:w-5 md:h-5" />
-                Audio
-              </button>
+            <p className="text-sm font-bold text-[#98A2B3]">O'quv dasturi yuklanmoqda...</p>
+          </div>
+        </div>
+      ) : !levels?.length ? (
+        <div className="bg-white rounded-[40px] border border-[#F2F4F7] overflow-hidden">
+          <div className="flex flex-col items-center justify-center py-28 px-6">
+            <div className="relative mb-8">
+              <div className="w-28 h-28 rounded-full bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 flex items-center justify-center">
+                <Target className="w-14 h-14 text-[#12B76A]" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 w-12 h-12 rounded-full bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center border-4 border-white">
+                <BookOpen className="w-5 h-5 text-[#F97316]" />
+              </div>
             </div>
-
-            <button 
-              onClick={handleAddLesson}
-              className="w-full bg-primary text-white py-4 md:py-5 rounded-[16px] md:rounded-[20px] font-black text-xs md:text-sm uppercase tracking-[0.2em] shadow-2xl shadow-primary/40 hover:scale-[1.02] active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 md:gap-3"
+            <h3 className="text-2xl font-black text-[#1D2939] mb-3">Darajalar hali yo'q</h3>
+            <p className="text-sm font-medium text-[#98A2B3] text-center max-w-lg leading-relaxed mb-6">
+              O'quv dasturini shakllantirish uchun birinchi darajani yarating
+            </p>
+            <button
+              onClick={() => setLevelDialogOpen(true)}
+              className="flex items-center gap-2 bg-[#F97316] text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all"
             >
-              <Save className="w-4 h-4 md:w-5 md:h-5" />
-              Saqlash
+              <Plus className="w-5 h-5" />
+              Yangi daraja yaratish
             </button>
           </div>
         </div>
+      ) : (
+        <div className="space-y-4">
+          {levels.map(level => (
+            <LevelCard key={level.id} levelId={level.id} />
+          ))}
+        </div>
       )}
 
-      {/* Lessons Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {filteredLessons.map((lesson) => (
-          <LessonCard 
-            key={lesson.id}
-            title={lesson.title}
-            type={lesson.type as 'text' | 'audio'}
-            duration={lesson.duration}
-            students={lesson.students}
-            status={lesson.status as 'Faol' | 'Qoralama'}
-          />
-        ))}
-      </div>
+      {/* Create Level Dialog */}
+      <CreateLevelDialog
+        isOpen={isLevelDialogOpen}
+        onClose={() => setLevelDialogOpen(false)}
+        onSubmit={handleCreateLevel}
+        isPending={createLevelMutation.isPending}
+        currentCount={levels?.length ?? 0}
+      />
     </div>
   );
 };
 
-export default Lessons;
+export default AdminLessons;

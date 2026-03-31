@@ -1,4 +1,10 @@
-const Hero = () => {
+import type { LandingStats } from '@/types/api';
+
+interface HeroProps {
+  stats?: LandingStats;
+}
+
+const Hero = ({ stats }: HeroProps) => {
   return (
     <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #fffcf9 0%, #fff7ed 30%, #fefce8 60%, #fff1f2 80%, #f0f9ff 100%)' }}>
@@ -80,7 +86,7 @@ const Hero = () => {
                   <span className="material-symbols-outlined text-2xl">groups</span>
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-on-surface leading-none">1000+</div>
+                  <div className="text-2xl font-black text-on-surface leading-none">{stats?.total_students ?? '1000'}+</div>
                   <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">Muvaffaqiyatli talaba</div>
                 </div>
               </div>
@@ -90,7 +96,7 @@ const Hero = () => {
                   <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-on-surface leading-none">4.9/5</div>
+                  <div className="text-2xl font-black text-on-surface leading-none">{stats?.average_rating ? `${stats.average_rating}/5` : '4.9/5'}</div>
                   <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">Ustozlar reytingi</div>
                 </div>
               </div>

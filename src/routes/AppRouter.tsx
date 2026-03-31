@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Toaster, toast } from 'sonner';
 import { publicRoutes } from './public.routes';
@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import NotFound from '../pages/public/NotFound';
 import ServerError from '../pages/public/ServerError';
 import { Wifi, WifiOff } from 'lucide-react';
+import { CustomAlertProvider } from '../components/ui/CustomAlert';
 
 const router = createBrowserRouter([
   ...publicRoutes,
@@ -59,6 +60,7 @@ const AppRouter = () => {
           },
         }}
       />
+      <CustomAlertProvider />
       <RouterProvider router={router} />
     </>
   );

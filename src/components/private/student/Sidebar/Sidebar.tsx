@@ -1,16 +1,18 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  BookOpen, 
-  FileText, 
-  BarChart2, 
-  PieChart, 
+import {
+  Home,
+  BookOpen,
+  FileText,
+  BarChart2,
+  PieChart,
   User,
   LogOut,
   RefreshCcw,
   X
 } from 'lucide-react';
 import SidebarItem from './SidebarItem';
+import { useLogout } from '@/hooks/useAuth';
+import { customAlert } from '@/components/ui/CustomAlert';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -20,6 +22,7 @@ interface SidebarProps {
 const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useLogout();
 
   const menuItems = [
     { icon: Home, label: 'Bosh sahifa', path: '/student/dashboard' },
@@ -27,14 +30,22 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
     { icon: FileText, label: 'Testlar', path: '/student/tests' },
     { icon: BarChart2, label: 'Reyting', path: '/student/rating' },
     { icon: PieChart, label: 'Analitika', path: '/student/analytics' },
-    { icon: RefreshCcw, label: 'Takrorlash', path: '/student/review' },
+    { icon: RefreshCcw, label: 'Mavzular dinamikasi', path: '/student/review' },
     { icon: User, label: 'Profil', path: '/student/profile' },
   ];
 
   const handleLogout = () => {
-    if (window.confirm('Haqiqatdan ham chiqmoqchimisiz?')) {
-      navigate('/login');
-    }
+    customAlert.confirm({
+      variant: 'warning',
+      title: 'Tizimdan chiqish',
+      description: 'Haqiqatdan ham tizimdan chiqmoqchimisiz?',
+      confirmText: 'Ha, chiqish',
+      cancelText: 'Bekor qilish',
+      icon: LogOut,
+      onConfirm: () => {
+        logout();
+      },
+    });
   };
 
   return (
@@ -48,7 +59,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
 
       <nav className="flex-1 space-y-2">
         {menuItems.map((item, index) => (
-          <SidebarItem 
+          <SidebarItem
             key={index}
             icon={item.icon}
             label={item.label}
@@ -57,9 +68,9 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
           />
         ))}
       </nav>
-      
+
       <div className="pt-6 border-t border-[#F2F4F7]">
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[#F04438] font-black text-sm hover:bg-[#FEE4E2] transition-all"
         >

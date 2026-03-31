@@ -1,15 +1,16 @@
 import React from 'react';
-import { Flame } from 'lucide-react';
+import { Flame, Clock } from 'lucide-react';
 
 interface LeaderboardRowProps {
   rank: number;
   name: string;
   streak: number;
   score: number;
+  avgTime?: number;
   isCurrentUser?: boolean;
 }
 
-const LeaderboardRow = ({ rank, name, streak, score, isCurrentUser }: LeaderboardRowProps) => {
+const LeaderboardRow = ({ rank, name, streak, score, avgTime, isCurrentUser }: LeaderboardRowProps) => {
   const getRankColor = () => {
     if (rank === 1) return 'text-surface-tint';
     if (rank === 2) return 'text-surface-tint';
@@ -52,9 +53,19 @@ const LeaderboardRow = ({ rank, name, streak, score, isCurrentUser }: Leaderboar
         </div>
       </div>
 
-      <div className="text-right">
-        <span className="text-lg font-black text-[#141F38] tracking-tight">{score}</span>
-        <p className="text-[#98A2B3] text-[10px] font-bold uppercase tracking-widest -mt-1">ball</p>
+      <div className="flex items-center gap-6">
+        {avgTime !== undefined && (
+          <div className="hidden sm:flex items-center gap-1.5 text-right">
+            <Clock className="w-3.5 h-3.5 text-[#98A2B3]" />
+            <span className="text-sm font-bold text-[#98A2B3]">
+              {Math.floor(avgTime / 60)}:{String(avgTime % 60).padStart(2, '0')}
+            </span>
+          </div>
+        )}
+        <div className="text-right">
+          <span className="text-lg font-black text-[#141F38] tracking-tight">{score}</span>
+          <p className="text-[#98A2B3] text-[10px] font-bold uppercase tracking-widest -mt-1">ball</p>
+        </div>
       </div>
     </div>
   );

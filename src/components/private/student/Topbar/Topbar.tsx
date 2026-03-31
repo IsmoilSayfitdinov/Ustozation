@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Bell, Moon, User, Settings, LogOut, X, Menu } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from 'react-router-dom';
-import { STUDENT_PROFILE } from '@/data/student';
+import { useAuthStore } from '@/store/useAuthStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TopbarProps {
@@ -11,8 +11,10 @@ interface TopbarProps {
 
 const Topbar = ({ onMenuClick }: TopbarProps) => {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const avatarLetter = (user?.profile?.full_name?.[0] || user?.username?.[0] || 'U').toUpperCase();
 
   const notifications = [
     { title: 'Yangi dars!', desc: '2-modul 4-dars ochildi.', time: '5 daqiqa oldin' },
@@ -50,7 +52,7 @@ const Topbar = ({ onMenuClick }: TopbarProps) => {
             onClick={() => setShowDropdown(!showDropdown)}
           >
             <AvatarImage src="" />
-            <AvatarFallback className="bg-surface-tint text-white font-black text-xs md:text-sm">{STUDENT_PROFILE.avatar}</AvatarFallback>
+            <AvatarFallback className="bg-surface-tint text-white font-black text-xs md:text-sm">{avatarLetter}</AvatarFallback>
           </Avatar>
 
           <AnimatePresence>

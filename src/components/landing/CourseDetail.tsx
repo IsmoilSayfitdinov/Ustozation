@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CourseLevel, LEVELS } from '@/data/courses';
-import { LogIn, ArrowLeft, CheckCircle2, Clock, BookOpen, Send, Globe } from 'lucide-react';
+import { type CourseLevel, LEVELS } from '@/data/courses';
+import { ArrowLeft, CheckCircle2, Clock, BookOpen } from 'lucide-react';
+import { useLandingPage } from '@/hooks/useLanding';
 
 interface CourseDetailProps {
   course: CourseLevel;
@@ -9,13 +11,35 @@ interface CourseDetailProps {
 }
 
 const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => {
-  const otherCourses = LEVELS.filter(l => l.code !== course.code);
+  const { data: landing } = useLandingPage();
+
+  // Merge API levels with presentation config
+  const allLevels = useMemo(() => {
+    if (!landing?.levels || landing.levels.length === 0) return LEVELS;
+    return landing.levels
+      .sort((a, b) => a.order - b.order)
+      .map((apiLevel, idx) => {
+        const config = LEVELS.find(l => l.id === apiLevel.slug) || LEVELS[idx] || LEVELS[0];
+        return {
+          ...config,
+          id: apiLevel.slug || config.id,
+          code: apiLevel.name,
+          title: apiLevel.name,
+          desc: apiLevel.description || config.desc,
+        };
+      });
+  }, [landing]);
+
+  // Find the current course from merged data (may have updated desc from API)
+  const currentCourse = allLevels.find(l => l.id === course.id) || course;
+  const otherCourses = allLevels.filter(l => l.code !== currentCourse.code);
+  const courseIndex = allLevels.findIndex(l => l.id === currentCourse.id);
 
   return (
     <div className="min-h-screen bg-[#fafaf9] pt-24 pb-20">
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20">
         {/* Back Button */}
-        <button 
+        <button
           onClick={onBack}
           className="flex items-center gap-2 text-on-surface-variant hover:text-primary transition-colors mb-8 group cursor-pointer"
         >
@@ -26,21 +50,21 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
         <div className="grid lg:grid-cols-12 gap-12">
           {/* Main Content */}
           <div className="lg:col-span-7 space-y-8">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${course.color} flex items-center justify-center text-white shadow-lg text-3xl font-black`}>
-                {LEVELS.indexOf(course) + 1}
+              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${currentCourse.color} flex items-center justify-center text-white shadow-lg text-3xl font-black`}>
+                {courseIndex >= 0 ? courseIndex + 1 : 1}
               </div>
-              
+
               <h1 className="text-4xl md:text-6xl font-black font-headline tracking-tighter text-on-surface">
-                {course.title}
+                {currentCourse.title}
               </h1>
-              
+
               <p className="text-xl text-on-surface-variant font-medium leading-relaxed max-w-2xl">
-                {course.fullDesc || course.desc}
+                {currentCourse.fullDesc || currentCourse.desc}
               </p>
 
               <div className="flex flex-wrap gap-6 pt-4">
@@ -50,17 +74,17 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
                   </div>
                   <div>
                     <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">Davomiyligi</p>
-                    <p className="text-lg font-black text-on-surface">{course.duration}</p>
+                    <p className="text-lg font-black text-on-surface">{currentCourse.duration}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                     <BookOpen className="w-5 h-5" />
                   </div>
                   <div>
                     <p className="text-xs text-on-surface-variant font-bold uppercase tracking-tighter">Darslar soni</p>
-                    <p className="text-lg font-black text-on-surface">{course.numberOfLessons || '24 ta dars'}</p>
+                    <p className="text-lg font-black text-on-surface">{currentCourse.numberOfLessons || '24 ta dars'}</p>
                   </div>
                 </div>
               </div>
@@ -80,7 +104,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
           {/* Sidebar */}
           <div className="lg:col-span-5 space-y-6">
             {/* Topics Card */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
@@ -91,9 +115,9 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
                 <h3 className="text-2xl font-black font-headline text-on-surface">Kurs mavzulari</h3>
               </div>
               <ul className="space-y-4">
-                {course.topics?.map((topic, i) => (
+                {currentCourse.topics?.map((topic, i) => (
                   <li key={i} className="flex items-center gap-4 group">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${course.color} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${currentCourse.color} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
                       {i + 1}
                     </div>
                     <span className="text-on-surface font-bold">{topic}</span>
@@ -103,7 +127,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
             </motion.div>
 
             {/* Outcomes Card */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
@@ -114,7 +138,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
                 <h3 className="text-2xl font-black font-headline text-on-surface">Kurs yakunida siz</h3>
               </div>
               <ul className="space-y-4">
-                {course.outcomes?.map((outcome, i) => (
+                {currentCourse.outcomes?.map((outcome, i) => (
                   <li key={i} className="flex items-start gap-4">
                     <div className="mt-1 w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0">
                       <CheckCircle2 className="w-4 h-4" />
@@ -136,25 +160,26 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {otherCourses.slice(0, 4).map((l, idx) => (
-              <motion.div 
-                key={l.code}
-                whileHover={{ y: -8 }}
-                onClick={() => onSelectCourse(l)}
-                className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-lg hover:shadow-2xl transition-all cursor-pointer group"
-              >
-                <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${l.color} flex items-center justify-center text-white text-xl font-black mb-4 group-hover:rotate-6 transition-transform`}>
-                   {LEVELS.indexOf(l) + 1}
-                </div>
-                <h4 className="text-xl font-black font-headline mb-2">{l.title}</h4>
-                <p className="text-sm text-on-surface-variant font-medium line-clamp-2">{l.desc}</p>
-              </motion.div>
-            ))}
+            {otherCourses.slice(0, 4).map((l) => {
+              const idx = allLevels.findIndex(al => al.id === l.id);
+              return (
+                <motion.div
+                  key={l.code}
+                  whileHover={{ y: -8 }}
+                  onClick={() => onSelectCourse(l)}
+                  className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-lg hover:shadow-2xl transition-all cursor-pointer group"
+                >
+                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${l.color} flex items-center justify-center text-white text-xl font-black mb-4 group-hover:rotate-6 transition-transform`}>
+                    {idx >= 0 ? idx + 1 : 1}
+                  </div>
+                  <h4 className="text-xl font-black font-headline mb-2">{l.title}</h4>
+                  <p className="text-sm text-on-surface-variant font-medium line-clamp-2">{l.desc}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </div>
       </div>
-
-      {/* Footer is usually outside, but I might need to include it or ensure it's in App.tsx */}
     </div>
   );
 };

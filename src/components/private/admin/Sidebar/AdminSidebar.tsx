@@ -1,16 +1,21 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Users, 
-  CheckSquare, 
-  Book, 
-  Award, 
-  PieChart, 
+import {
+  LayoutGrid,
+  Users,
+  CheckSquare,
+  Book,
+  Award,
+  PieChart,
   FileText,
   LogOut,
-  X
+  X,
+  Layers,
+  Globe,
+  GraduationCap
 } from 'lucide-react';
 import SidebarItem from '@/components/private/student/Sidebar/SidebarItem';
+import { useLogout } from '@/hooks/useAuth';
+import { customAlert } from '@/components/ui/CustomAlert';
 
 interface AdminSidebarProps {
   isOpen?: boolean;
@@ -20,21 +25,33 @@ interface AdminSidebarProps {
 const AdminSidebar = ({ isOpen = false, onClose }: AdminSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const logout = useLogout();
 
   const menuItems = [
     { icon: LayoutGrid, label: 'Bosh sahifa', path: '/admin/dashboard' },
     { icon: Users, label: 'Talabalar', path: '/admin/students' },
-    { icon: Book, label: 'Darslar', path: '/admin/lessons' },
+    { icon: Layers, label: 'Guruhlar', path: '/admin/groups' },
+    { icon: Book, label: "O'quv dasturi", path: '/admin/lessons' },
     { icon: CheckSquare, label: 'Testlar', path: '/admin/tests' },
     { icon: Award, label: 'Reyting', path: '/admin/rating' },
     { icon: PieChart, label: 'Analitika', path: '/admin/analytics' },
     { icon: FileText, label: 'Hisobotlar', path: '/admin/reports' },
+    { icon: GraduationCap, label: "O'qituvchilar", path: '/admin/teachers' },
+    { icon: Globe, label: 'Landing sahifa', path: '/admin/landing' },
   ];
 
   const handleLogout = () => {
-    if (window.confirm('Haqiqatdan ham chiqmoqchimisiz?')) {
-      navigate('/login');
-    }
+    customAlert.confirm({
+      variant: 'warning',
+      title: 'Tizimdan chiqish',
+      description: 'Haqiqatdan ham tizimdan chiqmoqchimisiz? Barcha saqlangan sessiyangiz tugaydi.',
+      confirmText: 'Ha, chiqish',
+      cancelText: 'Bekor qilish',
+      icon: LogOut,
+      onConfirm: () => {
+        logout();
+      },
+    });
   };
 
   return (
@@ -48,7 +65,7 @@ const AdminSidebar = ({ isOpen = false, onClose }: AdminSidebarProps) => {
 
       <nav className="flex-1 space-y-2">
         {menuItems.map((item, index) => (
-          <SidebarItem 
+          <SidebarItem
             key={index}
             icon={item.icon}
             label={item.label}
@@ -57,9 +74,9 @@ const AdminSidebar = ({ isOpen = false, onClose }: AdminSidebarProps) => {
           />
         ))}
       </nav>
-      
+
       <div className="pt-6 border-t border-[#F2F4F7]">
-        <button 
+        <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-[#F04438] font-black text-sm hover:bg-[#FEE4E2] transition-all"
         >

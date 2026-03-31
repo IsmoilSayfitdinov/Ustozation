@@ -3,7 +3,7 @@ import { LucideIcon, TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 interface StatCardProps {
   label: string;
   value: string | number;
-  trend: {
+  trend?: {
     value: string;
     isUp: boolean;
   };
@@ -59,17 +59,19 @@ const StatCard = ({ label, value, trend, icon: Icon, color }: StatCardProps) => 
         </div>
 
         <div className="flex items-center justify-between mt-6">
-          <div className="flex items-center gap-1.5">
-            {trend.isUp ? (
-              <TrendingUp className="w-4 h-4 text-[#12B76A]" />
-            ) : (
-              <TrendingDown className="w-4 h-4 text-[#F04438]" />
-            )}
-            <span className={`text-xs font-black ${trend.isUp ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
-              {trend.value} <span className="text-[#98A2B3] ml-0.5">bu hafta</span>
-            </span>
-          </div>
-          
+          {trend ? (
+            <div className="flex items-center gap-1.5">
+              {trend.isUp ? (
+                <TrendingUp className="w-4 h-4 text-[#12B76A]" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-[#F04438]" />
+              )}
+              <span className={`text-xs font-black ${trend.isUp ? 'text-[#12B76A]' : 'text-[#F04438]'}`}>
+                {trend.value} <span className="text-[#98A2B3] ml-0.5">bu hafta</span>
+              </span>
+            </div>
+          ) : <div />}
+
           <ArrowRight className={`w-4 h-4 ${config.text} opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300`} />
         </div>
       </div>

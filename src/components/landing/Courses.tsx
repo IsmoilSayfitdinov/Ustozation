@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LEVELS, CourseLevel } from '@/data/courses';
+import { LEVELS, type CourseLevel } from '@/data/courses';
+import { useLandingPage } from '@/hooks/useLanding';
 
 interface CoursesProps {
   onSelect?: (level: CourseLevel) => void;
@@ -7,6 +9,26 @@ interface CoursesProps {
 
 const Courses = ({ onSelect }: CoursesProps) => {
   const navigate = useNavigate();
+  const { data: landing } = useLandingPage();
+
+  // Merge API levels with frontend presentation config
+  const levels = useMemo(() => {
+    if (!landing?.levels || landing.levels.length === 0) return LEVELS;
+
+    return landing.levels
+      .sort((a, b) => a.order - b.order)
+      .map((apiLevel, idx) => {
+        // Try to match by slug or order with fallback config
+        const config = LEVELS.find(l => l.id === apiLevel.slug) || LEVELS[idx] || LEVELS[0];
+        return {
+          ...config,
+          id: apiLevel.slug || config.id,
+          code: apiLevel.name,
+          title: apiLevel.name,
+          desc: apiLevel.description || config.desc,
+        };
+      });
+  }, [landing]);
 
   const handleSelect = (l: CourseLevel) => {
     if (onSelect) {
@@ -19,7 +41,7 @@ const Courses = ({ onSelect }: CoursesProps) => {
   return (
     <section className="py-16 md:py-36 bg-[#fafaf9] relative overflow-hidden" id="courses">
       {/* Background decorations */}
-      <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.03]" 
+      <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.03]"
            style={{ backgroundImage: 'radial-gradient(#F97316 2px, transparent 2px)', backgroundSize: '30px 30px' }}>
       </div>
       <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary/10 rounded-full blur-[100px] pointer-events-none"></div>
@@ -38,14 +60,10 @@ const Courses = ({ onSelect }: CoursesProps) => {
         </div>
 
         {/* Roadmap Desktop View */}
-        <div className="hidden lg:block relative  mx-auto">
-          {/* Connector Line - Background */}
+        <div className="hidden lg:block relative mx-auto">
           <div className="absolute top-[85px] left-[10%] right-[10%] h-2 bg-outline-variant/30 rounded-full overflow-hidden">
-            {/* The moving glowing line (shimmer effect) */}
             <div className="absolute top-0 left-0 h-full w-[200%] bg-gradient-to-r from-emerald-500 via-primary to-rose-500 rounded-full opacity-80 animate-[shimmer_4s_linear_infinite]"></div>
-            
-            {/* Bright moving pulse (ball) travelling along the line */}
-            <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-transparent via-white to-transparent opacity-80 blur-sm mix-blend-overlay animate-[progress_3s_ease-in-out_infinite]"
+            <div className="absolute top-0 left-0 h-full w-20 bg-gradient-to-r from-transparent via-white to-transparent opacity-80 blur-sm mix-blend-overlay"
                  style={{ animation: 'progress 5s linear infinite' }}>
               <style>{`
                 @keyframes progress {
@@ -59,43 +77,34 @@ const Courses = ({ onSelect }: CoursesProps) => {
           </div>
 
           <div className="grid grid-cols-5 gap-6">
-            {LEVELS.map((l, idx) => (
+            {levels.map((l, idx) => (
               <div key={l.code} className="relative group flex flex-col items-center">
-                {/* Connector Dot */}
                 <div className="relative z-10 w-6 h-6 rounded-full bg-white border-4 border-surface flex items-center justify-center mb-8 shadow-md transition-all duration-500 group-hover:scale-[1.8] group-hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)]">
-                  {/* Glowing inner dot that pulses */}
                   <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${l.color} animate-pulse`}></div>
-                  {/* Ripple effect on hover */}
-                  <div className={`absolute -inset-2 rounded-full border-2 border-primary/30 opacity-0 group-hover:animate-ping`}></div>
+                  <div className="absolute -inset-2 rounded-full border-2 border-primary/30 opacity-0 group-hover:animate-ping"></div>
                 </div>
 
-                {/* Card */}
-                <div 
+                <div
                   onClick={() => handleSelect(l)}
                   className={`mt-2 w-full bg-white p-6 rounded-3xl transition-all duration-500 border border-outline-variant/20 hover:-translate-y-4 hover:border-transparent relative z-20 shadow-lg ${l.shadow} hover:shadow-2xl cursor-pointer group-hover:border-primary/50`}
                 >
-                  
-                  {/* Glowing Icon Header */}
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${l.color} flex items-center justify-center text-white mb-6 shadow-lg shadow-black/10 transform transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110`}>
                     <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: '"FILL" 1' }}>{l.icon}</span>
                   </div>
-                  
-                  {/* Content */}
+
                   <div className="flex items-end justify-between mb-3">
                     <h3 className="text-xl font-extrabold font-headline text-on-surface">{l.title}</h3>
                     <span className={`text-sm font-black text-transparent bg-clip-text bg-gradient-to-br ${l.color}`}>{l.code}</span>
                   </div>
-                  
+
                   <p className="text-sm text-on-surface-variant leading-relaxed font-medium mb-6 min-h-[60px]">{l.desc}</p>
-                  
-                  {/* Duration Badge */}
+
                   <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-container rounded-lg w-fit text-xs font-bold text-on-surface-variant group-hover:bg-primary/5 transition-colors">
                     <span className="material-symbols-outlined text-sm">directions_run</span>
                     {l.duration}
                   </div>
                 </div>
-                
-                {/* Decorative step number overlay */}
+
                 <div className="absolute -bottom-8 right-2 text-8xl font-black text-outline-variant/10 pointer-events-none select-none transition-all duration-500 group-hover:text-primary/10 group-hover:-translate-y-4">
                   0{idx + 1}
                 </div>
@@ -105,7 +114,6 @@ const Courses = ({ onSelect }: CoursesProps) => {
         </div>
 
         <div className="lg:hidden flex flex-col gap-5 max-w-4xl mx-auto relative pl-6 border-l-2 border-outline-variant/20 group">
-          {/* Moving gradient dot along the vertical mobile line */}
           <div className="absolute top-0 -left-[1.5px] w-1 h-32 bg-linear-to-b from-primary/0 via-primary to-primary/0 animate-[progressVertical_3s_linear_infinite]">
             <style>{`
               @keyframes progressVertical {
@@ -117,13 +125,12 @@ const Courses = ({ onSelect }: CoursesProps) => {
             `}</style>
           </div>
 
-          {LEVELS.map((l, idx) => (
-            <div 
-              key={l.code} 
+          {levels.map((l) => (
+            <div
+              key={l.code}
               onClick={() => handleSelect(l)}
               className="relative bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-md flex flex-col hover:-translate-y-2 transition-transform hover:shadow-xl group/card z-10 cursor-pointer"
             >
-              {/* Timeline Connector Mobile */}
               <div className="absolute top-10 -left-[35px] w-5 h-5 rounded-full bg-white border-4 border-surface flex items-center justify-center shadow-md transition-transform duration-300 group-hover/card:scale-150 group-hover/card:shadow-[0_0_10px_rgba(249,115,22,0.4)]">
                 <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${l.color} animate-pulse`}></div>
               </div>
@@ -139,7 +146,7 @@ const Courses = ({ onSelect }: CoursesProps) => {
 
               <h3 className="text-xl md:text-2xl font-extrabold font-headline mb-2">{l.title}</h3>
               <p className="text-sm md:text-base text-on-surface-variant leading-relaxed font-medium mb-5">{l.desc}</p>
-              
+
               <div className="mt-auto flex items-center gap-2 px-3 py-1.5 bg-surface-container rounded-lg w-fit text-xs font-bold text-on-surface-variant group-hover/card:bg-primary/5">
                 <span className="material-symbols-outlined text-sm">directions_run</span>
                 Davomiyligi: {l.duration}
@@ -147,7 +154,6 @@ const Courses = ({ onSelect }: CoursesProps) => {
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

@@ -1,4 +1,12 @@
-const Pricing = () => {
+import type { PricingPlan } from '@/types/api';
+
+interface PricingProps {
+  plans?: PricingPlan[];
+}
+
+const Pricing = ({ plans }: PricingProps) => {
+  const activePlans = plans?.filter(p => p.is_active).sort((a, b) => a.order - b.order);
+
   return (
     <section className="py-16 md:py-36 relative overflow-hidden bg-white">
       {/* ===== Animated Background Elements ===== */}
@@ -42,126 +50,140 @@ const Pricing = () => {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8 lg:gap-10 items-center mx-auto relative">
-          
-          {/* Card 1: Standard */}
-          <div className="bg-white/80 backdrop-blur-2xl p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/30 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 flex flex-col hover:-translate-y-2 relative z-10 mx-auto w-full max-w-sm md:max-w-none">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-5 md:mb-6">
-              <span className="material-symbols-outlined text-3xl">directions_walk</span>
-            </div>
-            <h3 className="text-2xl font-bold font-headline mb-3 text-on-surface">Standard</h3>
-            <p className="text-on-surface-variant mb-10 text-sm font-medium leading-relaxed">Mustaqil o'rganishni sevuvchilar uchun qulay imkoniyat.</p>
-            
-            <div className="mb-10 pb-10 border-b border-outline-variant/20">
-              <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black text-on-surface tracking-tighter">299</span>
-                <span className="text-xl font-bold text-on-surface-variant">,000</span>
-              </div>
-              <div className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
-            </div>
+          {activePlans && activePlans.length > 0 ? (
+            activePlans.map((plan, idx) => {
+              const priceStr = plan.price.toLocaleString('uz');
+              const priceParts = priceStr.split(/(?=\d{3}$)/);
+              const isPopular = plan.is_popular;
 
-            <ul className="space-y-5 mb-10 flex-1">
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">120+ Video darslar</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">Interaktiv testlar</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">PDF materiallar qo'llanma</span>
-              </li>
-            </ul>
-            <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container hover:border-outline-variant transition-all cursor-pointer bg-white shadow-sm text-sm tracking-wide">Kursni Tanlash</button>
-          </div>
+              if (isPopular) {
+                return (
+                  <div key={plan.id} className="relative z-20 md:-mx-4 lg:-mx-6 transform md:scale-105">
+                    <div className="absolute -inset-4 bg-gradient-to-r from-primary via-primary-dark to-[#f43f5e] rounded-[3.5rem] blur-2xl opacity-30 animate-pulse"></div>
+                    <div className="bg-gradient-to-b from-[#1c1917] to-[#292524] p-8 md:p-10 lg:p-12 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 relative shadow-2xl flex flex-col text-white h-full overflow-hidden mx-auto w-full max-w-sm md:max-w-none">
+                      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[60px] pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 w-64 h-64 bg-tertiary/20 rounded-full blur-[60px] pointer-events-none"></div>
+                      <div className="absolute -top-1 left-1/2 -translate-x-1/2 btn-shimmer text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] px-4 md:px-6 py-2 md:py-2.5 rounded-b-xl shadow-lg whitespace-nowrap border border-t-0 border-white/20">
+                        ⭐ ENG KO'P TANLANGAN
+                      </div>
+                      <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center text-white mb-5 md:mb-6 mt-4 shadow-lg shadow-primary/30 border border-white/20">
+                        <span className="material-symbols-outlined text-4xl">workspace_premium</span>
+                      </div>
+                      <h3 className="text-3xl font-extrabold font-headline mb-3 text-white">{plan.name}</h3>
+                      <p className="text-white/60 mb-10 text-sm font-medium leading-relaxed">{plan.description}</p>
+                      <div className="mb-10 pb-10 border-b border-white/10">
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-6xl font-black text-white tracking-tighter">{priceParts[0]}</span>
+                          {priceParts[1] && <span className="text-2xl font-bold text-white/60">,{priceParts[1]}</span>}
+                        </div>
+                        <div className="text-xs font-bold text-white/50 uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+                      </div>
+                      <ul className="space-y-6 mb-12 flex-1">
+                        {plan.features.map((f, i) => (
+                          <li key={i} className="flex items-start gap-4">
+                            <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span>
+                            <span className="text-sm font-extrabold text-white/90">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <button className="w-full py-5 rounded-xl font-extrabold font-headline btn-shimmer text-white hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all cursor-pointer border-none text-base tracking-wide flex items-center justify-center gap-2">
+                        Hoziroq boshlash <span className="material-symbols-outlined text-lg">arrow_forward</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
 
-          {/* Card 2: Premium (Highlighted) */}
-          <div className="relative z-20 md:-mx-4 lg:-mx-6 transform md:scale-105">
-            {/* Pulsing glow effect behind premium card */}
-            <div className="absolute -inset-4 bg-gradient-to-r from-primary via-primary-dark to-[#f43f5e] rounded-[3.5rem] blur-2xl opacity-30 animate-pulse"></div>
-            
-            <div className="bg-gradient-to-b from-[#1c1917] to-[#292524] p-8 md:p-10 lg:p-12 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 relative shadow-2xl flex flex-col text-white h-full overflow-hidden mx-auto w-full max-w-sm md:max-w-none">
-              {/* Premium Card Decorative background elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[60px] pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-64 h-64 bg-tertiary/20 rounded-full blur-[60px] pointer-events-none"></div>
-              
-              <div className="absolute -top-1 left-1/2 -translate-x-1/2 btn-shimmer text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] px-4 md:px-6 py-2 md:py-2.5 rounded-b-xl shadow-lg whitespace-nowrap border border-t-0 border-white/20">
-                ⭐ ENG KO'P TANLANGAN
-              </div>
-              
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center text-white mb-5 md:mb-6 mt-4 shadow-lg shadow-primary/30 border border-white/20">
-                <span className="material-symbols-outlined text-4xl">workspace_premium</span>
-              </div>
-              
-              <h3 className="text-3xl font-extrabold font-headline mb-3 text-white">Premium</h3>
-              <p className="text-white/60 mb-10 text-sm font-medium leading-relaxed">To'liq nazorat va kafolatlangan eng yuqori natija uchun.</p>
-              
-              <div className="mb-10 pb-10 border-b border-white/10">
-                <div className="flex items-baseline gap-1">
-                  <span className="text-6xl font-black text-white tracking-tighter">499</span>
-                  <span className="text-2xl font-bold text-white/60">,000</span>
+              return (
+                <div key={plan.id} className="bg-white/80 backdrop-blur-2xl p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/30 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 flex flex-col hover:-translate-y-2 relative z-10 mx-auto w-full max-w-sm md:max-w-none">
+                  <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-5 md:mb-6">
+                    <span className="material-symbols-outlined text-3xl">{idx === 0 ? 'directions_walk' : 'rocket_launch'}</span>
+                  </div>
+                  <h3 className="text-2xl font-bold font-headline mb-3 text-on-surface">{plan.name}</h3>
+                  <p className="text-on-surface-variant mb-10 text-sm font-medium leading-relaxed">{plan.description}</p>
+                  <div className="mb-10 pb-10 border-b border-outline-variant/20">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-5xl font-black text-on-surface tracking-tighter">{priceParts[0]}</span>
+                      {priceParts[1] && <span className="text-xl font-bold text-on-surface-variant">,{priceParts[1]}</span>}
+                    </div>
+                    <div className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+                  </div>
+                  <ul className="space-y-5 mb-10 flex-1">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-start gap-4">
+                        <span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span>
+                        <span className="text-sm font-bold text-on-surface-variant">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container hover:border-outline-variant transition-all cursor-pointer bg-white shadow-sm text-sm tracking-wide">Kursni Tanlash</button>
                 </div>
-                <div className="text-xs font-bold text-white/50 uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+              );
+            })
+          ) : (
+            <>
+              {/* Fallback: hardcoded cards when API data not available */}
+              <div className="bg-white/80 backdrop-blur-2xl p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/30 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 flex flex-col hover:-translate-y-2 relative z-10 mx-auto w-full max-w-sm md:max-w-none">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-5 md:mb-6">
+                  <span className="material-symbols-outlined text-3xl">directions_walk</span>
+                </div>
+                <h3 className="text-2xl font-bold font-headline mb-3 text-on-surface">Standard</h3>
+                <p className="text-on-surface-variant mb-10 text-sm font-medium leading-relaxed">Mustaqil o'rganishni sevuvchilar uchun qulay imkoniyat.</p>
+                <div className="mb-10 pb-10 border-b border-outline-variant/20">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-5xl font-black text-on-surface tracking-tighter">299</span>
+                    <span className="text-xl font-bold text-on-surface-variant">,000</span>
+                  </div>
+                  <div className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+                </div>
+                <ul className="space-y-5 mb-10 flex-1">
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">120+ Video darslar</span></li>
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">Interaktiv testlar</span></li>
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary/80 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">PDF materiallar qo'llanma</span></li>
+                </ul>
+                <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container hover:border-outline-variant transition-all cursor-pointer bg-white shadow-sm text-sm tracking-wide">Kursni Tanlash</button>
               </div>
 
-              <ul className="space-y-6 mb-12 flex-1">
-                <li className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span>
-                  <span className="text-sm font-extrabold text-white/90">Barcha Video kurslar + qo'shimcha</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span>
-                  <span className="text-sm font-extrabold text-white/90">Shaxsiy ustoz 24/7 nazorati</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span>
-                  <span className="text-sm font-extrabold text-white/90">Speaking club (haftasiga 6 kun)</span>
-                </li>
-                <li className="flex items-start gap-4">
-                  <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span>
-                  <span className="text-sm font-extrabold text-white/90">Rasmiy sertifikat beriladi</span>
-                </li>
-              </ul>
-              <button className="w-full py-5 rounded-xl font-extrabold font-headline btn-shimmer text-white hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all cursor-pointer border-none text-base tracking-wide flex items-center justify-center gap-2">
-                Hoziroq boshlash <span className="material-symbols-outlined text-lg">arrow_forward</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Card 3: Intensiv */}
-          <div className="bg-white/80 backdrop-blur-2xl p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/30 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 flex flex-col hover:-translate-y-2 relative z-10 mx-auto w-full max-w-sm md:max-w-none">
-            <div className="w-12 h-12 md:w-14 md:h-14 bg-[#1c1917]/5 rounded-2xl flex items-center justify-center text-[#1c1917] mb-5 md:mb-6 border border-[#1c1917]/10">
-              <span className="material-symbols-outlined text-3xl">rocket_launch</span>
-            </div>
-            <h3 className="text-2xl font-bold font-headline mb-3 text-on-surface">Intensiv</h3>
-            <p className="text-on-surface-variant mb-10 text-sm font-medium leading-relaxed">Tez va maxsus maqsadli natija istovchilar uchun (IELTS).</p>
-            
-            <div className="mb-10 pb-10 border-b border-outline-variant/20">
-              <div className="flex items-baseline gap-1">
-                <span className="text-5xl font-black text-on-surface tracking-tighter">799</span>
-                <span className="text-xl font-bold text-on-surface-variant">,000</span>
+              <div className="relative z-20 md:-mx-4 lg:-mx-6 transform md:scale-105">
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary via-primary-dark to-[#f43f5e] rounded-[3.5rem] blur-2xl opacity-30 animate-pulse"></div>
+                <div className="bg-gradient-to-b from-[#1c1917] to-[#292524] p-8 md:p-10 lg:p-12 rounded-[2.5rem] md:rounded-[3rem] border border-white/10 relative shadow-2xl flex flex-col text-white h-full overflow-hidden mx-auto w-full max-w-sm md:max-w-none">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[60px] pointer-events-none"></div>
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-tertiary/20 rounded-full blur-[60px] pointer-events-none"></div>
+                  <div className="absolute -top-1 left-1/2 -translate-x-1/2 btn-shimmer text-white text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] md:tracking-[0.25em] px-4 md:px-6 py-2 md:py-2.5 rounded-b-xl shadow-lg whitespace-nowrap border border-t-0 border-white/20">⭐ ENG KO'P TANLANGAN</div>
+                  <div className="w-14 h-14 md:w-16 md:h-16 bg-gradient-to-br from-primary to-primary-dark rounded-2xl flex items-center justify-center text-white mb-5 md:mb-6 mt-4 shadow-lg shadow-primary/30 border border-white/20"><span className="material-symbols-outlined text-4xl">workspace_premium</span></div>
+                  <h3 className="text-3xl font-extrabold font-headline mb-3 text-white">Premium</h3>
+                  <p className="text-white/60 mb-10 text-sm font-medium leading-relaxed">To'liq nazorat va kafolatlangan eng yuqori natija uchun.</p>
+                  <div className="mb-10 pb-10 border-b border-white/10">
+                    <div className="flex items-baseline gap-1"><span className="text-6xl font-black text-white tracking-tighter">499</span><span className="text-2xl font-bold text-white/60">,000</span></div>
+                    <div className="text-xs font-bold text-white/50 uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+                  </div>
+                  <ul className="space-y-6 mb-12 flex-1">
+                    <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span><span className="text-sm font-extrabold text-white/90">Barcha Video kurslar + qo'shimcha</span></li>
+                    <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span><span className="text-sm font-extrabold text-white/90">Shaxsiy ustoz 24/7 nazorati</span></li>
+                    <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span><span className="text-sm font-extrabold text-white/90">Speaking club (haftasiga 6 kun)</span></li>
+                    <li className="flex items-start gap-4"><span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: '"FILL" 1' }}>stars</span><span className="text-sm font-extrabold text-white/90">Rasmiy sertifikat beriladi</span></li>
+                  </ul>
+                  <button className="w-full py-5 rounded-xl font-extrabold font-headline btn-shimmer text-white hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all cursor-pointer border-none text-base tracking-wide flex items-center justify-center gap-2">Hoziroq boshlash <span className="material-symbols-outlined text-lg">arrow_forward</span></button>
+                </div>
               </div>
-              <div className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
-            </div>
 
-            <ul className="space-y-5 mb-10 flex-1">
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">Premiumning barcha qulayliklari</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">Haftada 2 ta yakkama-yakka dars</span>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span>
-                <span className="text-sm font-bold text-on-surface-variant">Maxsus IELTS tayyorlov kursi</span>
-              </li>
-            </ul>
-            <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container hover:border-outline-variant transition-all cursor-pointer bg-white shadow-sm text-sm tracking-wide">Kursni Tanlash</button>
-          </div>
-
+              <div className="bg-white/80 backdrop-blur-2xl p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/30 hover:border-primary/40 transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10 flex flex-col hover:-translate-y-2 relative z-10 mx-auto w-full max-w-sm md:max-w-none">
+                <div className="w-12 h-12 md:w-14 md:h-14 bg-[#1c1917]/5 rounded-2xl flex items-center justify-center text-[#1c1917] mb-5 md:mb-6 border border-[#1c1917]/10"><span className="material-symbols-outlined text-3xl">rocket_launch</span></div>
+                <h3 className="text-2xl font-bold font-headline mb-3 text-on-surface">Intensiv</h3>
+                <p className="text-on-surface-variant mb-10 text-sm font-medium leading-relaxed">Tez va maxsus maqsadli natija istovchilar uchun (IELTS).</p>
+                <div className="mb-10 pb-10 border-b border-outline-variant/20">
+                  <div className="flex items-baseline gap-1"><span className="text-5xl font-black text-on-surface tracking-tighter">799</span><span className="text-xl font-bold text-on-surface-variant">,000</span></div>
+                  <div className="text-xs font-bold text-on-surface-variant uppercase tracking-[0.2em] mt-2">so'm / oyniga</div>
+                </div>
+                <ul className="space-y-5 mb-10 flex-1">
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">Premiumning barcha qulayliklari</span></li>
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">Haftada 2 ta yakkama-yakka dars</span></li>
+                  <li className="flex items-start gap-4"><span className="material-symbols-outlined text-[#1c1917]/60 mt-0.5">check_circle</span><span className="text-sm font-bold text-on-surface-variant">Maxsus IELTS tayyorlov kursi</span></li>
+                </ul>
+                <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/30 text-on-surface hover:bg-surface-container hover:border-outline-variant transition-all cursor-pointer bg-white shadow-sm text-sm tracking-wide">Kursni Tanlash</button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </section>
