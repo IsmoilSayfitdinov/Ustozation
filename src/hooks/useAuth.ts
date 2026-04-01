@@ -5,20 +5,7 @@ import { authApi } from "@/api/auth";
 import { coursesApi } from "@/api/courses";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { LoginPayload, ProfileUpdatePayload, RegisterPayload } from "@/types/api";
-import { AxiosError } from "axios";
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof AxiosError && error.response?.data) {
-    const data = error.response.data;
-    if (data.errors) {
-      const firstKey = Object.keys(data.errors)[0];
-      const val = data.errors[firstKey];
-      return Array.isArray(val) ? val[0] : val;
-    }
-    if (data.detail) return data.detail;
-  }
-  return "Xatolik yuz berdi";
-}
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 export function useLogin() {
   const { setTokens, setUser } = useAuthStore();
@@ -32,15 +19,18 @@ export function useLogin() {
     onSuccess: async (tokens) => {
       setTokens(tokens.access, tokens.refresh);
 
-      // Fetch user profile
-      const { data: user } = await authApi.getMe();
-      setUser(user);
+      try {
+        const { data: user } = await authApi.getMe();
+        setUser(user);
+        toast.success("Muvaffaqiyatli kirdingiz!");
 
-      toast.success("Muvaffaqiyatli kirdingiz!");
-
-      if (user.role === "admin" || user.role === "teacher") {
-        navigate("/admin/dashboard");
-      } else {
+        if (user.role === "admin" || user.role === "teacher") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/student/dashboard");
+        }
+      } catch {
+        // Token set but getMe failed — still navigate, AuthGuard will handle
         navigate("/student/dashboard");
       }
     },

@@ -19,6 +19,7 @@ export function useInsights() {
       const { data } = await analyticsApi.getInsights();
       return data.results;
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

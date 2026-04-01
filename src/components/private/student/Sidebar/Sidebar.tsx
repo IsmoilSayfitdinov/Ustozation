@@ -49,7 +49,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
   };
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen w-72 bg-white border-r border-[#F2F4F7] flex flex-col p-6 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
+    <aside className={`fixed left-0 top-0 h-screen w-72 bg-white dark:bg-[#111111] border-r border-[#F2F4F7] dark:border-white/10 flex flex-col p-6 z-50 transition-transform duration-300 lg:translate-x-0 ${isOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
       <div className="px-6 mb-12 flex items-center justify-between">
         <img src="/img/Mask group.png" alt="Ustoznation Logo" className="h-8" />
         <button className="lg:hidden text-[#98A2B3] hover:bg-[#F2F4F7] p-2 rounded-xl transition-colors" onClick={onClose}>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, CreditCard, Sparkles, Settings, Plus, Pencil, Trash2, Star, Eye, EyeOff, Loader2, Save, Phone, Mail, MapPin, Send, AtSign, Video } from 'lucide-react';
+import { MessageSquare, CreditCard, Sparkles, Settings, Plus, Pencil, Trash2, Star, Eye, EyeOff, Loader2, Save, Phone, Mail, MapPin, Send, AtSign, Video, ExternalLink } from 'lucide-react';
 import {
   useReviews, useCreateReview, useUpdateReview, useDeleteReview,
   usePricingPlans, useCreatePricingPlan, useUpdatePricingPlan, useDeletePricingPlan,
@@ -8,6 +8,7 @@ import {
 } from '@/hooks/useLanding';
 import type { Review, PricingPlan, Feature, SiteSetting } from '@/types/api';
 import { customAlert } from '@/components/ui/CustomAlert';
+import { IMaskInput } from 'react-imask';
 
 type Tab = 'reviews' | 'pricing' | 'features' | 'settings';
 
@@ -455,61 +456,176 @@ function FeaturesTab() {
 
 // ==================== Settings Tab ====================
 
+const PHONE_MASK = '+{998} 00 000 00 00';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_REGEX = /^https?:\/\/.+/;
+
 function SettingsTab() {
   const { data: settings, isLoading } = useSiteSettings();
   const updateMutation = useUpdateSiteSettings();
   const [form, setForm] = useState<Partial<SiteSetting>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof SiteSetting, string>>>({});
   const [initialized, setInitialized] = useState(false);
 
-  // Initialize form when settings load
   if (settings && !initialized) {
     setForm(settings);
     setInitialized(true);
   }
 
+  const validate = (): boolean => {
+    const errs: typeof errors = {};
+
+    if (!form.phone?.trim()) {
+      errs.phone = 'Telefon raqami kiritilishi shart';
+    } else if (form.phone.replace(/\D/g, '').length < 12) {
+      errs.phone = "To'liq telefon raqamini kiriting";
+    }
+
+    if (!form.email?.trim()) {
+      errs.email = 'Email kiritilishi shart';
+    } else if (!EMAIL_REGEX.test(form.email)) {
+      errs.email = "Noto'g'ri email formati";
+    }
+
+    if (!form.address?.trim()) {
+      errs.address = 'Manzil kiritilishi shart';
+    }
+
+    if (form.telegram && !URL_REGEX.test(form.telegram)) {
+      errs.telegram = "URL https:// bilan boshlanishi kerak";
+    }
+    if (form.instagram && !URL_REGEX.test(form.instagram)) {
+      errs.instagram = "URL https:// bilan boshlanishi kerak";
+    }
+    if (form.youtube && !URL_REGEX.test(form.youtube)) {
+      errs.youtube = "URL https:// bilan boshlanishi kerak";
+    }
+
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
   const handleSave = () => {
+    if (!validate()) return;
     updateMutation.mutate(form);
+  };
+
+  const setField = (key: keyof SiteSetting, value: string) => {
+    setForm(p => ({ ...p, [key]: value }));
+    if (errors[key]) setErrors(p => ({ ...p, [key]: undefined }));
   };
 
   if (isLoading) return <LoadingState />;
 
-  const fields: { key: keyof SiteSetting; label: string; icon: typeof Phone; placeholder: string }[] = [
-    { key: 'phone', label: 'Telefon', icon: Phone, placeholder: '+998 90 123 45 67' },
-    { key: 'email', label: 'Email', icon: Mail, placeholder: 'info@ustoznation.uz' },
-    { key: 'address', label: 'Manzil', icon: MapPin, placeholder: "Toshkent, O'zbekiston" },
-    { key: 'telegram', label: 'Telegram', icon: Send, placeholder: '@ustoznation' },
-    { key: 'instagram', label: 'Instagram', icon: AtSign, placeholder: '@ustoznation' },
-    { key: 'youtube', label: 'YouTube', icon: Video, placeholder: 'youtube.com/ustoznation' },
-  ];
+  const inputClass = (key: keyof SiteSetting) =>
+    `w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none transition-colors ${
+      errors[key] ? 'border-[#F04438] focus:border-[#F04438]/50' : 'border-[#F2F4F7] focus:border-[#F97316]/30'
+    }`;
 
   return (
     <div className="space-y-6">
+      {/* Contact Info */}
       <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#F2F4F7] space-y-6">
-        <h4 className="text-lg font-black text-[#141F38]">Sayt aloqa ma'lumotlari</h4>
+        <h4 className="text-lg font-black text-[#141F38]">Aloqa ma'lumotlari</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {fields.map(({ key, label, icon: Icon, placeholder }) => (
+          {/* Phone with mask */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider flex items-center gap-2">
+              <Phone className="w-3.5 h-3.5" /> Telefon
+            </label>
+            <IMaskInput
+              mask={PHONE_MASK}
+              value={form.phone ?? ''}
+              unmask={false}
+              onAccept={(value: string) => setField('phone', value)}
+              placeholder="+998 90 123 45 67"
+              className={inputClass('phone')}
+            />
+            {errors.phone && <p className="text-[#F04438] text-[11px] font-bold ml-1">{errors.phone}</p>}
+          </div>
+
+          {/* Email */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider flex items-center gap-2">
+              <Mail className="w-3.5 h-3.5" /> Email
+            </label>
+            <input
+              type="email"
+              value={form.email ?? ''}
+              onChange={(e) => setField('email', e.target.value)}
+              placeholder="info@ustoznation.uz"
+              className={inputClass('email')}
+            />
+            {errors.email && <p className="text-[#F04438] text-[11px] font-bold ml-1">{errors.email}</p>}
+          </div>
+
+          {/* Address */}
+          <div className="md:col-span-2 space-y-2">
+            <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider flex items-center gap-2">
+              <MapPin className="w-3.5 h-3.5" /> Manzil
+            </label>
+            <input
+              type="text"
+              value={form.address ?? ''}
+              onChange={(e) => setField('address', e.target.value)}
+              placeholder="Toshkent, O'zbekiston"
+              className={inputClass('address')}
+            />
+            {errors.address && <p className="text-[#F04438] text-[11px] font-bold ml-1">{errors.address}</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* Social Links */}
+      <div className="bg-white p-6 md:p-8 rounded-2xl border border-[#F2F4F7] space-y-6">
+        <h4 className="text-lg font-black text-[#141F38]">Ijtimoiy tarmoq havolalari</h4>
+        <div className="grid grid-cols-1 gap-4">
+          {([
+            { key: 'telegram' as const, label: 'Telegram', icon: Send, placeholder: 'https://t.me/ustoznation' },
+            { key: 'instagram' as const, label: 'Instagram', icon: AtSign, placeholder: 'https://instagram.com/ustoznation' },
+            { key: 'youtube' as const, label: 'YouTube', icon: Video, placeholder: 'https://youtube.com/@ustoznation' },
+          ]).map(({ key, label, icon: Icon, placeholder }) => (
             <div key={key} className="space-y-2">
               <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider flex items-center gap-2">
                 <Icon className="w-3.5 h-3.5" /> {label}
               </label>
-              <input
-                value={form[key] ?? ''}
-                onChange={(e) => setForm(p => ({ ...p, [key]: e.target.value }))}
-                placeholder={placeholder}
-                className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30 transition-colors"
-              />
+              <div className="flex items-center gap-3">
+                <input
+                  type="url"
+                  value={form[key] ?? ''}
+                  onChange={(e) => setField(key, e.target.value)}
+                  placeholder={placeholder}
+                  className={`flex-1 px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none transition-colors ${
+                    errors[key] ? 'border-[#F04438] focus:border-[#F04438]/50' : 'border-[#F2F4F7] focus:border-[#F97316]/30'
+                  }`}
+                />
+                {form[key] && !errors[key] && (
+                  <a
+                    href={form[key]}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="shrink-0 w-10 h-10 rounded-xl bg-[#F97316]/10 text-[#F97316] flex items-center justify-center hover:bg-[#F97316] hover:text-white transition-colors"
+                    title="Havolani ochish"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              {errors[key] && <p className="text-[#F04438] text-[11px] font-bold ml-1">{errors[key]}</p>}
             </div>
           ))}
         </div>
-        <button
-          onClick={handleSave}
-          disabled={updateMutation.isPending}
-          className="flex items-center gap-2 bg-[#F97316] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all disabled:opacity-70"
-        >
-          <Save className="w-4 h-4" />
-          {updateMutation.isPending ? 'Saqlanmoqda...' : 'Saqlash'}
-        </button>
       </div>
+
+      {/* Save Button */}
+      <button
+        onClick={handleSave}
+        disabled={updateMutation.isPending}
+        className="flex items-center gap-2 bg-[#F97316] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all disabled:opacity-70"
+      >
+        <Save className="w-4 h-4" />
+        {updateMutation.isPending ? 'Saqlanmoqda...' : 'Saqlash'}
+      </button>
     </div>
   );
 }

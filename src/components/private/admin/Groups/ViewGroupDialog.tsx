@@ -1,14 +1,16 @@
-import React from 'react';
-import { X, User, Calendar, Users, Loader2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, User, Calendar, Users, Loader2, Pencil, Save, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCourseStudents } from '@/hooks/useCourses';
+import { useCourseStudents, useCourseLessons, useToggleLesson } from '@/hooks/useCourses';
 import type { Course } from '@/types/api';
 
 interface ViewGroupDialogProps {
   isOpen: boolean;
   onClose: () => void;
   group: Course | null;
+  onUpdate?: (id: number, data: { title?: string; max_students?: number; is_active?: boolean }) => void;
+  isUpdating?: boolean;
 }
 
 const levelTheme: Record<string, string> = {
@@ -23,10 +25,35 @@ const levelTheme: Record<string, string> = {
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
-const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, group }) => {
+const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, group, onUpdate, isUpdating }) => {
   const { data: students, isLoading } = useCourseStudents(group?.id ?? 0);
+  const { data: courseLessons } = useCourseLessons(group?.id ?? 0);
+  const toggleLessonMutation = useToggleLesson();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editMaxStudents, setEditMaxStudents] = useState('');
+
+  useEffect(() => {
+    if (group) {
+      setEditTitle(group.title);
+      setEditMaxStudents(String(group.max_students));
+      setIsEditing(false);
+    }
+  }, [group]);
 
   if (!isOpen || !group) return null;
+
+  const handleSave = () => {
+    onUpdate?.(group.id, {
+      title: editTitle,
+      max_students: Number(editMaxStudents) || group.max_students,
+    });
+    setIsEditing(false);
+  };
+
+  const handleToggleActive = () => {
+    onUpdate?.(group.id, { is_active: !group.is_active });
+  };
 
   const bgClass = levelTheme[group.level.name] || 'bg-primary';
 
@@ -57,25 +84,46 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
               >
                 <X className="w-5 h-5" />
               </button>
-              <h2 className="text-2xl font-black text-white font-headline tracking-tighter mb-2">
-                {group.title}
-              </h2>
-              <div className="flex gap-2">
+              {isEditing ? (
+                <input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="text-2xl font-black text-white font-headline tracking-tighter mb-2 bg-white/20 rounded-xl px-3 py-1 border border-white/30 outline-none w-full"
+                />
+              ) : (
+                <h2 className="text-2xl font-black text-white font-headline tracking-tighter mb-2">
+                  {group.title}
+                </h2>
+              )}
+              <div className="flex gap-2 items-center">
                 <span className="bg-white/20 text-white px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
                   {group.level.name}
                 </span>
-                <span className={cn(
-                  "px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm",
-                  group.is_active ? "bg-white/20 text-white" : "bg-red-500/30 text-white"
-                )}>
+                <button
+                  onClick={handleToggleActive}
+                  disabled={isUpdating}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm cursor-pointer transition-colors",
+                    group.is_active ? "bg-white/20 text-white hover:bg-red-500/30" : "bg-red-500/30 text-white hover:bg-white/20"
+                  )}
+                >
                   {group.is_active ? 'Aktiv' : 'Nofaol'}
-                </span>
+                </button>
+                {!isEditing ? (
+                  <button onClick={() => setIsEditing(true)} className="bg-white/20 text-white p-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button onClick={handleSave} disabled={isUpdating} className="bg-white/30 text-white p-1.5 rounded-lg hover:bg-white/40 transition-colors">
+                    <Save className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-[#F9FAFB] p-4 rounded-xl border border-[#F2F4F7]">
                   <div className="flex items-center gap-2 text-[#98A2B3] mb-1">
                     <User className="w-4 h-4" />
@@ -88,7 +136,16 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                     <Users className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">O'quvchilar</span>
                   </div>
-                  <p className="font-bold text-[#1C2434] text-sm">{group.student_count} / {group.max_students}</p>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      value={editMaxStudents}
+                      onChange={(e) => setEditMaxStudents(e.target.value)}
+                      className="font-bold text-[#1C2434] text-sm bg-white border border-[#E4E7EC] rounded-lg px-2 py-1 w-24 outline-none"
+                    />
+                  ) : (
+                    <p className="font-bold text-[#1C2434] text-sm">{group.student_count} / {group.max_students}</p>
+                  )}
                 </div>
                 <div className="bg-[#F9FAFB] p-4 rounded-xl border border-[#F2F4F7] col-span-2">
                   <div className="flex items-center gap-2 text-[#98A2B3] mb-1">
@@ -100,6 +157,36 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                   </p>
                 </div>
               </div>
+
+              {/* Lessons Toggle */}
+              {courseLessons && courseLessons.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <BookOpen className="w-5 h-5 text-[#F97316]" />
+                    <h3 className="text-lg font-bold text-[#141F38]">Darslar boshqaruvi</h3>
+                  </div>
+                  <div className="space-y-2">
+                    {courseLessons.map((cl) => (
+                      <div key={cl.id} className="flex items-center justify-between p-3 bg-[#F9FAFB] rounded-xl border border-[#F2F4F7]">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-[#1C2434] truncate">{cl.lesson.title}</p>
+                          <p className="text-[11px] text-[#98A2B3] font-medium">{cl.module_title}</p>
+                        </div>
+                        <button
+                          onClick={() => toggleLessonMutation.mutate({ courseId: group.id, lessonId: cl.lesson.id, unlock: !cl.is_unlocked })}
+                          disabled={toggleLessonMutation.isPending}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0",
+                            cl.is_unlocked ? "bg-[#E8FFF0] text-[#22C55E] hover:bg-[#22C55E] hover:text-white" : "bg-[#F2F4F7] text-[#98A2B3] hover:bg-primary hover:text-white"
+                          )}
+                        >
+                          {cl.is_unlocked ? 'Ochiq' : 'Yopiq'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Students List */}
               <div>

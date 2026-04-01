@@ -1,10 +1,12 @@
 import type { LandingStats } from '@/types/api';
+import { useTranslation } from 'react-i18next';
 
 interface HeroProps {
   stats?: LandingStats;
 }
 
 const Hero = ({ stats }: HeroProps) => {
+  const { t } = useTranslation();
   return (
     <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden"
       style={{ background: 'linear-gradient(135deg, #fffcf9 0%, #fff7ed 30%, #fefce8 60%, #fff1f2 80%, #f0f9ff 100%)' }}>
@@ -48,32 +50,32 @@ const Hero = ({ stats }: HeroProps) => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
               </span>
-              Yangi kurslar mavsumiga qabul ochiq
+              {t('hero.badge')}
             </div>
 
             <h1 className="text-[2.5rem] sm:text-5xl lg:text-[5rem] font-extrabold font-headline leading-[1.05] tracking-tight text-[#1c1917]">
-              Ingliz tilini{' '}
+              {t('hero.title_1')}{' '}
               <span className="relative inline-block">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-dark to-[#f43f5e] italic pr-2">
-                  ishonch
+                  {t('hero.title_2')}
                 </span>
                 <svg className="absolute -bottom-3 left-0 w-full h-4" viewBox="0 0 200 12" fill="none">
                   <path d="M2 8 C50 2, 150 2, 198 8" stroke="#F97316" strokeWidth="4" strokeLinecap="round" opacity="0.4" />
                 </svg>
               </span>{' '}
-              bilan o'rganing
+              {t('hero.title_3')}
             </h1>
 
             <p className="text-lg lg:text-xl text-on-surface-variant max-w-lg leading-relaxed font-medium">
-              O'zbekistondagi yetakchi o'quv markazi bilan IELTS va Speaking darajangizni bor-yo'g'i 3 oyda kafolatli oshiring.
+              {t('hero.subtitle')}
             </p>
 
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-2">
               <button className="btn-shimmer text-white px-6 md:px-10 py-4 md:py-5 rounded-[1.25rem] font-headline font-extrabold text-base md:text-lg hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-none flex items-center justify-center gap-2 w-full sm:w-auto">
-                Bepul darsga yozilish <span className="material-symbols-outlined text-xl">arrow_right_alt</span>
+                {t('hero.cta_free')} <span className="material-symbols-outlined text-xl">arrow_right_alt</span>
               </button>
               <button className="bg-white/80 backdrop-blur-md text-on-surface px-6 md:px-10 py-4 md:py-5 rounded-[1.25rem] font-headline font-bold text-base md:text-lg hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer border-2 border-outline-variant/30 flex items-center justify-center gap-2 w-full sm:w-auto">
-                <span className="material-symbols-outlined text-primary text-xl">play_circle</span> Batafsil video
+                <span className="material-symbols-outlined text-primary text-xl">play_circle</span> {t('hero.cta_video')}
               </button>
             </div>
 
@@ -87,7 +89,7 @@ const Hero = ({ stats }: HeroProps) => {
                 </div>
                 <div>
                   <div className="text-2xl font-black text-on-surface leading-none">{stats?.total_students ?? '1000'}+</div>
-                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">Muvaffaqiyatli talaba</div>
+                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">{t('hero.students')}</div>
                 </div>
               </div>
               <div className="hidden sm:block w-px h-12 bg-on-surface/10"></div>
@@ -97,7 +99,7 @@ const Hero = ({ stats }: HeroProps) => {
                 </div>
                 <div>
                   <div className="text-2xl font-black text-on-surface leading-none">{stats?.average_rating ? `${stats.average_rating}/5` : '4.9/5'}</div>
-                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">Ustozlar reytingi</div>
+                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">{t('hero.rating')}</div>
                 </div>
               </div>
             </div>
@@ -144,15 +146,15 @@ const Hero = ({ stats }: HeroProps) => {
             <div className="absolute bottom-4 md:bottom-10 right-4 sm:-right-8 bg-white/95 backdrop-blur-xl rounded-full pl-2 md:pl-3 pr-4 md:pr-6 py-2 md:py-3 shadow-2xl border border-white flex items-center gap-3 md:gap-4 z-20 float-orb hover:shadow-primary/20 transition-all scale-90 md:scale-100 origin-bottom-right">
               <div className="flex -space-x-3">
                 <div className="w-12 h-12 rounded-full border-[3px] border-white overflow-hidden shadow-sm">
-                  <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgFLJAlrv4R9TylkrtWjqG_9WTvODWEP_5HMW3LNH9CQauTgVYARAGoUz6vrqD6cVkJ30UkYo2xmk1pQ-R_1dj_l5BT70L2CpQdpHC9WPkjZVEWLlsZ3CkJvhnrCUq_O2fgT51QWn9ihFD5gWJBEC8fig10786zr8nHoiESzuoX96i8BcpKJRQRNzeuSv7AmOY-i-6ZkDr4AYl7y6JNRulof6YhaAR3Fg4t6frwFaRSIFVPT9y30fjvC3VHFrQFnuDVbfH068d_3g" alt="Teacher" />
+                  <img className="w-full h-full object-cover" loading="lazy" width={48} height={48} src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgFLJAlrv4R9TylkrtWjqG_9WTvODWEP_5HMW3LNH9CQauTgVYARAGoUz6vrqD6cVkJ30UkYo2xmk1pQ-R_1dj_l5BT70L2CpQdpHC9WPkjZVEWLlsZ3CkJvhnrCUq_O2fgT51QWn9ihFD5gWJBEC8fig10786zr8nHoiESzuoX96i8BcpKJRQRNzeuSv7AmOY-i-6ZkDr4AYl7y6JNRulof6YhaAR3Fg4t6frwFaRSIFVPT9y30fjvC3VHFrQFnuDVbfH068d_3g" alt="Teacher" />
                 </div>
                 <div className="w-12 h-12 rounded-full border-[3px] border-white overflow-hidden shadow-sm">
-                  <img className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN5k0ok4RMeJc3FtOi3WtxaC7DyywOKpSRZh90G4zdiBjz7rhblN4uAGoObA479OlXwiMDyyHxHdAC2X3BJIjzAx7BO1DWipSb0hvKLhCHev9vjXyOeNu8bLDauC2AymzA-rm1Sd8enx1zg0P0_WMzh2Xebt7t3RqNjSf1VE4jH2mX8VnoWTmOk1KcfNUsxSqifTvxkgvjAoPimxCWeN1Gnr0cunCal_F0nkdr0cu5A8tRC0JK-ZYm1fbDtBw3qBFhVxMU8JwRUj8" alt="Team" />
+                  <img className="w-full h-full object-cover" loading="lazy" width={48} height={48} src="https://lh3.googleusercontent.com/aida-public/AB6AXuBN5k0ok4RMeJc3FtOi3WtxaC7DyywOKpSRZh90G4zdiBjz7rhblN4uAGoObA479OlXwiMDyyHxHdAC2X3BJIjzAx7BO1DWipSb0hvKLhCHev9vjXyOeNu8bLDauC2AymzA-rm1Sd8enx1zg0P0_WMzh2Xebt7t3RqNjSf1VE4jH2mX8VnoWTmOk1KcfNUsxSqifTvxkgvjAoPimxCWeN1Gnr0cunCal_F0nkdr0cu5A8tRC0JK-ZYm1fbDtBw3qBFhVxMU8JwRUj8" alt="Team" />
                 </div>
                 <div className="w-12 h-12 rounded-full border-[3px] border-white bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center font-bold text-xs shadow-inner">+15</div>
               </div>
               <div>
-                <p className="text-sm font-black text-on-surface">Top Ustozlar jamoasi</p>
+                <p className="text-sm font-black text-on-surface">{t('hero.team')}</p>
                 <div className="flex items-center gap-1 text-[#fbbf24]">
                   {[1,2,3,4,5].map(i => <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>)}
                 </div>

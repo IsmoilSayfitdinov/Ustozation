@@ -34,7 +34,7 @@ const StreakGrid = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-7 gap-3">
+      <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-7 gap-2 sm:gap-3">
         {days.map((item, index) => (
           <div
             key={index}

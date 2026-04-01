@@ -18,7 +18,7 @@ const TYPE_ICONS: Record<string, { icon: typeof BookOpen; iconBg: string; iconCo
 const DEFAULT_ICON = { icon: BookOpen, iconBg: '#F973161A', iconColor: '#F97316' };
 
 const StudentTests = () => {
-  const [selectedQuiz, setSelectedQuiz] = useState<any | null>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<{ id: number } | null>(null);
 
   const { data: dashboard } = useDashboard();
   const { data: courses } = useCourses();

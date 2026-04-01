@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "about": "About",
+    "courses": "Courses",
+    "interactive": "Interactive",
+    "pricing": "Pricing",
+    "reviews": "Reviews",
+    "faq": "FAQ",
+    "login": "Login"
+  },
+  "hero": {
+    "badge": "Enrollment for new courses is open",
+    "title_1": "Learn English",
+    "title_2": "with confidence",
+    "title_3": "",
+    "subtitle": "Boost your IELTS and Speaking level in just 3 months with Uzbekistan's leading language center.",
+    "cta_free": "Start Free Lesson",
+    "cta_video": "Watch Video",
+    "students": "Successful students",
+    "rating": "Teacher rating",
+    "team": "Top Teachers team"
+  },
+  "about": {
+    "title_1": "Why choose",
+    "title_2": "Ustozation",
+    "subtitle": "We prioritize results and convenience in education. Every detail serves your success.",
+    "certified": "Certified",
+    "certified_desc": "Internationally certified and experienced specialists conduct the lessons.",
+    "systematic": "Systematic approach",
+    "systematic_desc": "Complete and tested curriculum from zero to advanced level.",
+    "fast": "Fast results",
+    "fast_desc": "With our intensive methods, you'll feel your progress after every lesson.",
+    "tech": "High-Tech",
+    "tech_desc": "A platform that lets you learn anytime, on any device."
+  },
+  "courses": {
+    "badge": "Growth Bridge",
+    "title_1": "Choose your",
+    "title_2": "level",
+    "subtitle": "Determine which level to start from and move toward a clear goal."
+  },
+  "bento": {
+    "title_1": "Platform",
+    "title_2": "Features",
+    "subtitle": "Modern tools that make learning effective, engaging, and result-oriented."
+  },
+  "pricing": {
+    "badge": "Affordable prices",
+    "title_1": "Fair",
+    "title_2": "pricing",
+    "subtitle": "Take the first step toward your goal. Customized study plans for all levels.",
+    "choose": "Choose Plan",
+    "start_now": "Start Now",
+    "most_popular": "MOST POPULAR",
+    "per_month": "UZS / month"
+  },
+  "testimonials": {
+    "title": "What our students say"
+  },
+  "cta": {
+    "title": "Start learning English today",
+    "subtitle": "Thousands of students have already achieved their goals. It's your turn!",
+    "join": "Join Now",
+    "consult": "Free Consultation"
+  },
+  "footer": {
+    "description": "A quality English language platform powered by modern methodology and high technology.",
+    "menu": "Menu",
+    "legal": "Legal",
+    "contact": "Contact",
+    "about_us": "About us",
+    "our_courses": "Our courses",
+    "achievements": "Achievements",
+    "blog": "Blog",
+    "privacy": "Privacy policy",
+    "offer": "Public offer",
+    "security": "Security",
+    "rights": "All rights reserved.",
+    "made_in": "Made in Uzbekistan",
+    "designed": "Designed with excellence"
+  }
+}

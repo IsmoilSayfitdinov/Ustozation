@@ -1,4 +1,5 @@
 import type { Review } from '@/types/api';
+import { useTranslation } from 'react-i18next';
 
 const DEFAULT_REVIEWS = [
   { full_name: 'Jahongir Rustamov', course_name: 'Elementary kursi', rating: 5, text: "Platforma juda qulay ekan. Video darslarni qayta-qayta ko'rish imkoniyati bilimimni mustahkamlashga yordam berdi." },
@@ -11,13 +12,14 @@ interface TestimonialsProps {
 }
 
 const Testimonials = ({ reviews }: TestimonialsProps) => {
+  const { t } = useTranslation();
   const activeReviews = reviews?.filter(r => r.is_active);
   const items = activeReviews && activeReviews.length > 0 ? activeReviews : DEFAULT_REVIEWS;
 
   return (
     <section className="py-16 md:py-32" id="reviews">
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20">
-        <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-center mb-12 md:mb-20">O'quvchilarimiz ovozi</h2>
+        <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-center mb-12 md:mb-20">{t('testimonials.title')}</h2>
         <div className="grid md:grid-cols-3 gap-5 md:gap-6">
           {items.map((r, idx) => {
             const initials = r.full_name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);

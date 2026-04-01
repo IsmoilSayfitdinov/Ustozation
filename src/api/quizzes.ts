@@ -23,7 +23,7 @@ export const quizzesApi = {
   getQuizTypes: () =>
     client.get<PaginatedResponse<QuizType>>("/quizzes/types/"),
 
-  createQuizType: (data: { name: string; description?: string }) =>
+  createQuizType: (data: { name: string; slug: string; description?: string }) =>
     client.post<ApiResponse<QuizType>>("/quizzes/types/", data),
 
   // Quiz detail

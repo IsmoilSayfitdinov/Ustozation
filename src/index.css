@@ -341,5 +341,85 @@ ul {
   }
   html {
     @apply font-sans;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
+}
+
+/* ===== Dark Mode Global Overrides ===== */
+.dark {
+  color-scheme: dark;
+}
+
+/* Main page backgrounds */
+.dark .bg-\[\#FCFCFD\],
+.dark .bg-\[\#F8F9FA\],
+.dark .bg-\[\#F9FAFB\],
+.dark .bg-\[\#F2F4F7\],
+.dark .bg-\[\#F4F4F6\],
+.dark .bg-\[\#fafaf9\] {
+  background-color: #141414 !important;
+}
+
+/* Card backgrounds */
+.dark .bg-white {
+  background-color: #1a1a1a !important;
+}
+
+.dark .bg-white\/80,
+.dark .bg-white\/90,
+.dark .bg-white\/95 {
+  background-color: rgba(26, 26, 26, 0.9) !important;
+}
+
+/* Text colors */
+.dark .text-\[\#141F38\],
+.dark .text-\[\#1C2434\],
+.dark .text-\[\#1D2939\],
+.dark .text-\[\#1c1917\],
+.dark .text-on-surface {
+  color: #f0f0f0 !important;
+}
+
+.dark .text-\[\#667085\],
+.dark .text-\[\#98A2B3\],
+.dark .text-\[\#8C94A3\],
+.dark .text-on-surface-variant {
+  color: #9ca3af !important;
+}
+
+/* Borders */
+.dark .border-\[\#F2F4F7\],
+.dark .border-\[\#E4E7EC\],
+.dark .border-\[\#EAECF0\],
+.dark .border-outline-variant\/20,
+.dark .border-outline-variant\/30 {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Inputs */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1f1f1f !important;
+  color: #f0f0f0 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6b7280 !important;
+}
+
+/* Topbar */
+.dark header {
+  background-color: #111111 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Scrollbar */
+.dark ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #333;
 }

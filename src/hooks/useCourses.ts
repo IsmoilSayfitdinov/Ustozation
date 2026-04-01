@@ -1,20 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { coursesApi } from "@/api/courses";
-import { AxiosError } from "axios";
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof AxiosError && error.response?.data) {
-    const data = error.response.data;
-    if (data.errors) {
-      const firstKey = Object.keys(data.errors)[0];
-      const val = data.errors[firstKey];
-      return Array.isArray(val) ? val[0] : val;
-    }
-    if (data.detail) return data.detail;
-  }
-  return "Xatolik yuz berdi";
-}
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 export function useLevels() {
   return useQuery({
@@ -31,13 +18,47 @@ export function useCreateLevel() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; description: string; order: number }) => {
+    mutationFn: async (data: { name: string; slug: string; description: string; order: number }) => {
       const res = await coursesApi.createLevel(data);
       return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
       toast.success("Daraja yaratildi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useUpdateLevel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<{ name: string; slug: string; description: string; order: number }> }) => {
+      const res = await coursesApi.updateLevel(id, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({ queryKey: ["level"] });
+      toast.success("Daraja yangilandi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useDeleteLevel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await coursesApi.deleteLevel(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["levels"] });
+      toast.success("Daraja o'chirildi!");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));
@@ -145,7 +166,7 @@ export function useCreateModule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ levelId, data }: { levelId: number; data: { title: string; description: string; order: number } }) => {
+    mutationFn: async ({ levelId, data }: { levelId: number; data: { title: string; description: string; order: number, slug: string } }) => {
       const res = await coursesApi.createModule(levelId, data);
       return res.data;
     },
@@ -163,7 +184,7 @@ export function useUpdateModule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { title?: string; description?: string; order?: number } }) => {
+    mutationFn: async ({ id, data }: { id: number; data: { title?: string; description?: string; order?: number; slug?: string } }) => {
       const res = await coursesApi.updateModule(id, data);
       return res.data;
     },

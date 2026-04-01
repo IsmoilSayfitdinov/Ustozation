@@ -1,23 +1,25 @@
 import type { SiteSetting } from '@/types/api';
-
-const MENU_LINKS = [
-  { label: 'Biz haqimizda', href: '#' },
-  { label: 'Kurslarimiz', href: '#' },
-  { label: 'Yutuqlarimiz', href: '#' },
-  { label: 'Blog', href: '#' },
-];
-
-const LEGAL_LINKS = [
-  { label: 'Maxfiylik siyosati', href: '#' },
-  { label: 'Ommaviy oferta', href: '#' },
-  { label: 'Xavfsizlik', href: '#' },
-];
+import { useTranslation } from 'react-i18next';
 
 interface FooterProps {
   contact?: SiteSetting;
 }
 
 const Footer = ({ contact }: FooterProps) => {
+  const { t } = useTranslation();
+
+  const MENU_LINKS = [
+    { label: t('footer.about_us'), href: '#' },
+    { label: t('footer.our_courses'), href: '#' },
+    { label: t('footer.achievements'), href: '#' },
+    { label: t('footer.blog'), href: '#' },
+  ];
+
+  const LEGAL_LINKS = [
+    { label: t('footer.privacy'), href: '#' },
+    { label: t('footer.offer'), href: '#' },
+    { label: t('footer.security'), href: '#' },
+  ];
   const phone = contact?.phone || '+998 71 123 45 67';
   const email = contact?.email || 'info@ustozation.uz';
   const address = contact?.address || "Toshkent sh., Mirzo Ulug'bek t., 14-uy";
@@ -30,7 +32,7 @@ const Footer = ({ contact }: FooterProps) => {
         <div className="space-y-6">
           <div className="text-2xl font-black text-primary font-headline tracking-tighter italic">Ustozation</div>
           <p className="text-on-surface-variant font-medium leading-relaxed text-sm">
-            Zamonaviy metodika va yuqori texnologiyalar yordamida sifatli ta'lim beruvchi ingliz tili platformasi.
+            {t('footer.description')}
           </p>
           <div className="flex gap-3">
             <a className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={telegram} target="_blank" rel="noreferrer">
@@ -45,7 +47,7 @@ const Footer = ({ contact }: FooterProps) => {
           </div>
         </div>
         <div>
-          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">Menyular</h4>
+          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">{t('footer.menu')}</h4>
           <ul className="space-y-3">
             {MENU_LINKS.map((link) => (
               <li key={link.label}><a className="text-on-surface-variant font-semibold hover:text-primary transition-colors text-sm" href={link.href}>{link.label}</a></li>
@@ -53,7 +55,7 @@ const Footer = ({ contact }: FooterProps) => {
           </ul>
         </div>
         <div>
-          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">Huquqiy</h4>
+          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">{t('footer.legal')}</h4>
           <ul className="space-y-3">
             {LEGAL_LINKS.map((link) => (
               <li key={link.label}><a className="text-on-surface-variant font-semibold hover:text-primary transition-colors text-sm" href={link.href}>{link.label}</a></li>
@@ -61,7 +63,7 @@ const Footer = ({ contact }: FooterProps) => {
           </ul>
         </div>
         <div>
-          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">Bog'lanish</h4>
+          <h4 className="font-black text-on-surface uppercase tracking-widest text-xs mb-6">{t('footer.contact')}</h4>
           <ul className="space-y-4">
             <li className="flex items-start gap-3">
               <span className="material-symbols-outlined text-primary text-lg">call</span>
@@ -79,10 +81,10 @@ const Footer = ({ contact }: FooterProps) => {
         </div>
       </div>
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 pt-6 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-4 text-center">
-        <p className="text-xs font-semibold text-on-surface-variant">&copy; {new Date().getFullYear()} Ustozation. Barcha huquqlar himoyalangan.</p>
+        <p className="text-xs font-semibold text-on-surface-variant">&copy; {new Date().getFullYear()} Ustozation. {t('footer.rights')}</p>
         <div className="flex gap-6 text-[10px] font-black text-on-surface-variant uppercase tracking-widest">
-          <span>Made in Uzbekistan</span>
-          <span>Designed with excellence</span>
+          <span>{t('footer.made_in')}</span>
+          <span>{t('footer.designed')}</span>
         </div>
       </div>
     </footer>

@@ -1,25 +1,38 @@
-import StudentHome from '@/pages/private/student/Home';
-import StudentLessons from '@/pages/private/student/Lessons';
-import StudentTests from '@/pages/private/student/Tests';
-import StudentRating from '@/pages/private/student/Rating';
-import StudentAnalytics from '@/pages/private/student/Analytics';
-import StudentProfile from '@/pages/private/student/Profile';
-import StudentReview from '@/pages/private/student/Review';
+import { lazy, Suspense } from 'react';
 import StudentLayout from '@/layouts/student/StudentLayout';
+import AdminLayout from '@/layouts/admin/AdminLayout';
 import AuthGuard from './AuthGuard';
 
-import AdminHome from '@/pages/private/admin/Home';
-import AdminLayout from '@/layouts/admin/AdminLayout';
-import AdminStudents from '@/pages/private/admin/Students';
-import AdminStudentDetail from '@/pages/private/admin/StudentDetail';
-import AdminLessons from '@/pages/private/admin/Lessons';
-import AdminTests from '@/pages/private/admin/Tests';
-import AdminReports from '@/pages/private/admin/Reports';
-import AdminAnalytics from '@/pages/private/admin/Analytics';
-import AdminRating from '@/pages/private/admin/Rating';
-import AdminGroups from '@/pages/private/admin/Groups';
-import AdminLanding from '@/pages/private/admin/Landing';
-import AdminTeachers from '@/pages/private/admin/Teachers';
+// Lazy load all pages for code splitting
+const StudentHome = lazy(() => import('@/pages/private/student/Home'));
+const StudentLessons = lazy(() => import('@/pages/private/student/Lessons'));
+const StudentTests = lazy(() => import('@/pages/private/student/Tests'));
+const StudentRating = lazy(() => import('@/pages/private/student/Rating'));
+const StudentAnalytics = lazy(() => import('@/pages/private/student/Analytics'));
+const StudentProfile = lazy(() => import('@/pages/private/student/Profile'));
+const StudentReview = lazy(() => import('@/pages/private/student/Review'));
+
+const AdminHome = lazy(() => import('@/pages/private/admin/Home'));
+const AdminStudents = lazy(() => import('@/pages/private/admin/Students'));
+const AdminStudentDetail = lazy(() => import('@/pages/private/admin/StudentDetail'));
+const AdminLessons = lazy(() => import('@/pages/private/admin/Lessons'));
+const AdminTests = lazy(() => import('@/pages/private/admin/Tests'));
+const AdminReports = lazy(() => import('@/pages/private/admin/Reports'));
+const AdminAnalytics = lazy(() => import('@/pages/private/admin/Analytics'));
+const AdminRating = lazy(() => import('@/pages/private/admin/Rating'));
+const AdminGroups = lazy(() => import('@/pages/private/admin/Groups'));
+const AdminLanding = lazy(() => import('@/pages/private/admin/Landing'));
+const AdminTeachers = lazy(() => import('@/pages/private/admin/Teachers'));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+);
+
+const S = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>{children}</Suspense>
+);
 
 export const privateRoutes = [
   {
@@ -29,13 +42,13 @@ export const privateRoutes = [
         path: '/student',
         element: <StudentLayout />,
         children: [
-          { path: 'dashboard', element: <StudentHome /> },
-          { path: 'lessons', element: <StudentLessons /> },
-          { path: 'tests', element: <StudentTests /> },
-          { path: 'rating', element: <StudentRating /> },
-          { path: 'analytics', element: <StudentAnalytics /> },
-          { path: 'profile', element: <StudentProfile /> },
-          { path: 'review', element: <StudentReview /> },
+          { path: 'dashboard', element: <S><StudentHome /></S> },
+          { path: 'lessons', element: <S><StudentLessons /></S> },
+          { path: 'tests', element: <S><StudentTests /></S> },
+          { path: 'rating', element: <S><StudentRating /></S> },
+          { path: 'analytics', element: <S><StudentAnalytics /></S> },
+          { path: 'profile', element: <S><StudentProfile /></S> },
+          { path: 'review', element: <S><StudentReview /></S> },
         ],
       },
     ],
@@ -47,17 +60,28 @@ export const privateRoutes = [
         path: '/admin',
         element: <AdminLayout />,
         children: [
-          { path: 'dashboard', element: <AdminHome /> },
-          { path: 'students', element: <AdminStudents /> },
-          { path: 'students/:id', element: <AdminStudentDetail /> },
-          { path: 'groups', element: <AdminGroups /> },
-          { path: 'lessons', element: <AdminLessons /> },
-          { path: 'tests', element: <AdminTests /> },
-          { path: 'reports', element: <AdminReports /> },
-          { path: 'analytics', element: <AdminAnalytics /> },
-          { path: 'rating', element: <AdminRating /> },
-          { path: 'landing', element: <AdminLanding /> },
-          { path: 'teachers', element: <AdminTeachers /> },
+          { path: 'dashboard', element: <S><AdminHome /></S> },
+          { path: 'students', element: <S><AdminStudents /></S> },
+          { path: 'students/:id', element: <S><AdminStudentDetail /></S> },
+          { path: 'groups', element: <S><AdminGroups /></S> },
+          { path: 'lessons', element: <S><AdminLessons /></S> },
+          { path: 'tests', element: <S><AdminTests /></S> },
+          { path: 'reports', element: <S><AdminReports /></S> },
+          { path: 'analytics', element: <S><AdminAnalytics /></S> },
+          { path: 'rating', element: <S><AdminRating /></S> },
+        ],
+      },
+    ],
+  },
+  {
+    element: <AuthGuard allowedRoles={["admin"]} />,
+    children: [
+      {
+        path: '/admin',
+        element: <AdminLayout />,
+        children: [
+          { path: 'landing', element: <S><AdminLanding /></S> },
+          { path: 'teachers', element: <S><AdminTeachers /></S> },
         ],
       },
     ],

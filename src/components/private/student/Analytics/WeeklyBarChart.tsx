@@ -13,7 +13,7 @@ import { usePoints } from '@/hooks/useGamification';
 
 const DAY_NAMES = ['Ya', 'Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha'];
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number; payload: { day: string } }> }) => {
   if (active && payload && payload.length) {
     return (
       <div className="bg-white px-3 py-2 rounded-xl shadow-xl border border-[#F2F4F7] z-50">

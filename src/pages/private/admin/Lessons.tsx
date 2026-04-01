@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Target, Package, BookOpen, Plus, Trash2, Edit2, ChevronDown, FileText, Layers, Loader2 } from 'lucide-react';
+import { Target, Package, BookOpen, Plus, Trash2, Edit2, ChevronDown, FileText, Layers, Loader2, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import CreateLevelDialog from '@/components/private/admin/Lessons/CreateLevelDialog';
 import CreateModuleDialog from '@/components/private/admin/Lessons/CreateModuleDialog';
 import CreateLessonDialog from '@/components/private/admin/Lessons/CreateLessonDialog';
 import EditModuleDialog from '@/components/private/admin/Lessons/EditModuleDialog';
 import EditLessonDialog from '@/components/private/admin/Lessons/EditLessonDialog';
-import { useLevels, useLevelDetail, useCreateLevel, useCreateModule, useCreateLesson, useDeleteModule, useDeleteLesson, useUpdateModule, useUpdateLesson } from '@/hooks/useCourses';
+import { useLevels, useLevelDetail, useCreateLevel, useUpdateLevel, useDeleteLevel, useCreateModule, useCreateLesson, useDeleteModule, useDeleteLesson, useUpdateModule, useUpdateLesson } from '@/hooks/useCourses';
+import { customAlert } from '@/components/ui/CustomAlert';
 import type { Module as ModuleType, Lesson } from '@/types/api';
 
 const levelColors: Record<string, { iconBg: string }> = {
@@ -18,9 +19,11 @@ const levelColors: Record<string, { iconBg: string }> = {
   'Advanced': { iconBg: 'bg-pink-500' },
 };
 
-const LevelCard = ({ levelId }: { levelId: number }) => {
+const LevelCard = ({ levelId, onDeleteLevel, onUpdateLevel }: { levelId: number; onDeleteLevel?: (id: number, name: string) => void; onUpdateLevel?: (id: number, data: Partial<{ name: string; description: string }>) => void }) => {
   const { data: level, isLoading } = useLevelDetail(levelId);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editName, setEditName] = useState('');
   const [expandedModules, setExpandedModules] = useState<number[]>([]);
 
   // Create dialogs
@@ -60,7 +63,7 @@ const LevelCard = ({ levelId }: { levelId: number }) => {
 
   const handleCreateModule = (data: { name: string; description: string }) => {
     createModuleMutation.mutate(
-      { levelId: level.id, data: { title: data.name, description: data.description || '', order: level.modules.length + 1 } },
+      { levelId: level.id, data: { title: data.name, description: data.description || '', order: level.modules.length + 1, slug: data.name } },
       { onSuccess: () => setModuleDialogOpen(false) }
     );
   };
@@ -103,7 +106,27 @@ const LevelCard = ({ levelId }: { levelId: number }) => {
               <Target className="w-7 h-7 text-white opacity-90" />
             </div>
             <div>
-              <h3 className="text-lg font-black text-[#1C2434] tracking-tight">{level.name}</h3>
+              {isEditingName ? (
+                <div className="flex items-center gap-2 mb-1" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-lg font-black text-[#1C2434] bg-[#F9FAFB] border border-[#E4E7EC] rounded-lg px-2 py-0.5 outline-none focus:border-primary/30 w-48"
+                    autoFocus
+                  />
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onUpdateLevel?.(level.id, { name: editName }); setIsEditingName(false); }}
+                    className="p-1 rounded-lg bg-primary/10 text-primary hover:bg-primary hover:text-white transition-colors"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); setIsEditingName(false); }} className="p-1 rounded-lg hover:bg-[#F2F4F7]">
+                    <X className="w-3.5 h-3.5 text-[#98A2B3]" />
+                  </button>
+                </div>
+              ) : (
+                <h3 className="text-lg font-black text-[#1C2434] tracking-tight">{level.name}</h3>
+              )}
               <p className="text-sm font-medium text-[#667085] mb-2">{level.description}</p>
               <div className="flex items-center gap-3 text-xs font-bold text-[#98A2B3]">
                 <span className="flex items-center gap-1"><Layers className="w-3.5 h-3.5" /> {level.modules.length} ta modul</span>
@@ -111,8 +134,28 @@ const LevelCard = ({ levelId }: { levelId: number }) => {
               </div>
             </div>
           </div>
-          <div className={cn("p-2 text-[#98A2B3] transition-transform duration-300", isExpanded && "rotate-180")}>
-            <ChevronDown className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            {onUpdateLevel && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setEditName(level.name); setIsEditingName(true); }}
+                className="p-2 rounded-xl hover:bg-primary/10 text-[#98A2B3] hover:text-primary transition-colors"
+                title="Tahrirlash"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {onDeleteLevel && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onDeleteLevel(level.id, level.name); }}
+                className="p-2 rounded-xl hover:bg-[#FEE4E2] text-[#98A2B3] hover:text-[#F04438] transition-colors"
+                title="O'chirish"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+            <div className={cn("p-2 text-[#98A2B3] transition-transform duration-300", isExpanded && "rotate-180")}>
+              <ChevronDown className="w-5 h-5" />
+            </div>
           </div>
         </div>
 
@@ -285,10 +328,24 @@ const AdminLessons = () => {
   const { data: levels, isLoading } = useLevels();
   const [isLevelDialogOpen, setLevelDialogOpen] = useState(false);
   const createLevelMutation = useCreateLevel();
+  const updateLevelMutation = useUpdateLevel();
+  const deleteLevelMutation = useDeleteLevel();
 
-  const handleCreateLevel = (data: { name: string; description: string; order: number }) => {
+  const handleCreateLevel = (data: { name: string; slug: string; description: string; order: number }) => {
     createLevelMutation.mutate(data, {
       onSuccess: () => setLevelDialogOpen(false),
+    });
+  };
+
+  const handleDeleteLevel = (id: number, name: string) => {
+    customAlert.confirm({
+      variant: 'warning',
+      title: "Darajani o'chirish",
+      description: `"${name}" darajasi va undagi barcha modullar o'chiriladi.`,
+      confirmText: "O'chirish",
+      cancelText: 'Bekor qilish',
+      icon: Trash2,
+      onConfirm: () => deleteLevelMutation.mutate(id),
     });
   };
 
@@ -315,7 +372,7 @@ const AdminLessons = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         {dynamicStats.map((stat, idx) => (
           <div key={idx} className="bg-white rounded-[24px] p-6 border border-[#F2F4F7] shadow-sm flex items-center gap-4 hover:shadow-lg transition-shadow">
             <div className={`w-14 h-14 rounded-full flex items-center justify-center shrink-0 ${stat.bg}`}>
@@ -368,7 +425,7 @@ const AdminLessons = () => {
       ) : (
         <div className="space-y-4">
           {levels.map(level => (
-            <LevelCard key={level.id} levelId={level.id} />
+            <LevelCard key={level.id} levelId={level.id} onDeleteLevel={handleDeleteLevel} onUpdateLevel={(id, data) => updateLevelMutation.mutate({ id, data })} />
           ))}
         </div>
       )}

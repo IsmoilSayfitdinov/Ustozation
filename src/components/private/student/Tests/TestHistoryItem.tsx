@@ -54,7 +54,7 @@ const TestHistoryItem = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
           <div className="bg-[#F8F9FA] rounded-xl p-3 text-center transition-colors group-hover:bg-[#F0F2F5] flex flex-col items-center justify-center gap-1">
              <p className="text-[10px] text-[#98A2B3] font-bold uppercase flex items-center justify-center gap-1">To'g'ri</p>
              <p className="font-black text-[#141F38] text-[15px]">{score}</p>

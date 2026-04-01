@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LEVELS, type CourseLevel } from '@/data/courses';
 import { useLandingPage } from '@/hooks/useLanding';
+import { useTranslation } from 'react-i18next';
 
 interface CoursesProps {
   onSelect?: (level: CourseLevel) => void;
@@ -10,6 +11,7 @@ interface CoursesProps {
 const Courses = ({ onSelect }: CoursesProps) => {
   const navigate = useNavigate();
   const { data: landing } = useLandingPage();
+  const { t } = useTranslation();
 
   // Merge API levels with frontend presentation config
   const levels = useMemo(() => {
@@ -51,12 +53,12 @@ const Courses = ({ onSelect }: CoursesProps) => {
         <div className="text-center mb-16 md:mb-24 space-y-4 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-bold tracking-tight shadow-sm border border-outline-variant/20 mb-2 hover:bg-primary/5 transition-colors cursor-pointer">
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: '"FILL" 1' }}>route</span>
-            Rivojlanish ko'prigi
+            {t('courses.badge')}
           </div>
           <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold font-headline tracking-tighter">
-            O'zingizga mos <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-light">daraja</span>
+            {t('courses.title_1')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-light">{t('courses.title_2')}</span>
           </h2>
-          <p className="text-on-surface-variant text-base md:text-xl font-medium">Qaysi bosqichdan boshlashingizni aniqlang va aniq maqsad sari harakat qiling.</p>
+          <p className="text-on-surface-variant text-base md:text-xl font-medium">{t('courses.subtitle')}</p>
         </div>
 
         {/* Roadmap Desktop View */}

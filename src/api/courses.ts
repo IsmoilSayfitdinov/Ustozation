@@ -21,8 +21,14 @@ export const coursesApi = {
   getLevelDetail: (id: number) =>
     client.get<LevelDetail>(`/courses/levels/${id}/`),
 
-  createLevel: (data: { name: string; description: string; order: number }) =>
+  createLevel: (data: { name: string; slug: string; description: string; order: number }) =>
     client.post<ApiResponse<Level>>("/courses/levels/", data),
+
+  updateLevel: (id: number, data: Partial<{ name: string; slug: string; description: string; order: number }>) =>
+    client.put<Level>(`/courses/levels/${id}/`, data),
+
+  deleteLevel: (id: number) =>
+    client.delete(`/courses/levels/${id}/`),
 
   // Modules
   getModules: (levelId: number) =>

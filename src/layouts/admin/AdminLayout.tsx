@@ -7,7 +7,7 @@ const AdminLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-[#FCFCFD]">
+    <div className="flex min-h-screen bg-[#FCFCFD] dark:bg-[#0a0a0a]">
       <AdminSidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
       
       <div className="flex-1 lg:ml-72 flex flex-col min-w-0">

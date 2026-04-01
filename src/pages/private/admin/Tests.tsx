@@ -1,29 +1,90 @@
 import { useState } from 'react';
-import { Plus, X, HelpCircle, Layers, CheckCircle, AlertTriangle, Save, Check, Loader2 } from 'lucide-react';
+import { Plus, X, HelpCircle, Layers, CheckCircle, AlertTriangle, Save, Check, Loader2, Trash2, Clock, Pencil } from 'lucide-react';
 import QuestionCard from '@/components/private/admin/Tests/QuestionCard';
 import CustomSelect from '@/components/ui/CustomSelect';
-import { useCourses } from '@/hooks/useCourses';
-import { useCourseQuizzes, useQuizDetail, useCreateQuestion, useDeleteQuestion } from '@/hooks/useQuizzes';
+import { useCourses, useCourseLessons } from '@/hooks/useCourses';
+import { useCourseQuizzes, useQuizDetail, useCreateQuestion, useDeleteQuestion, useCreateQuiz, useUpdateQuiz, useDeleteQuiz, useQuizTypes, useCreateQuizType, useUploadMedia, useDeleteMedia, useUpdateAnswers } from '@/hooks/useQuizzes';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createQuizSchema, type CreateQuizSchema } from '@/schemas/private/admin/quiz';
+import { customAlert } from '@/components/ui/CustomAlert';
 
 const Tests = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedQuizId, setSelectedQuizId] = useState<string>('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCreateQuiz, setShowCreateQuiz] = useState(false);
 
-  // Form state
+  // Form state for questions
   const [questionText, setQuestionText] = useState('');
   const [correctOption, setCorrectOption] = useState<number>(0);
   const [answers, setAnswers] = useState(['', '', '', '']);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
 
   const { data: courses } = useCourses();
   const { data: quizzes, isLoading: quizzesLoading } = useCourseQuizzes(Number(selectedCourseId) || 0);
   const { data: quizDetail, isLoading: quizLoading } = useQuizDetail(Number(selectedQuizId) || 0);
+  const { data: quizTypes } = useQuizTypes();
+  const { data: courseLessons } = useCourseLessons(Number(selectedCourseId) || 0);
 
   const createQuestionMutation = useCreateQuestion();
   const deleteQuestionMutation = useDeleteQuestion();
+  const createQuizMutation = useCreateQuiz();
+  const updateQuizMutation = useUpdateQuiz();
+  const deleteQuizMutation = useDeleteQuiz();
+  const uploadMediaMutation = useUploadMedia();
+  const deleteMediaMutation = useDeleteMedia();
+  const createQuizTypeMutation = useCreateQuizType();
+  const updateAnswersMutation = useUpdateAnswers();
+  const [showCreateType, setShowCreateType] = useState(false);
+  const [newTypeName, setNewTypeName] = useState('');
+  const [newTypeSlug, setNewTypeSlug] = useState('');
+  const [showEditQuiz, setShowEditQuiz] = useState(false);
+  const [editQuizData, setEditQuizData] = useState({ title: '', max_score: '', passing_score: '', penalty_per_retake: '', time_limit: '', is_active: true });
 
   const courseOptions = (courses ?? []).map(c => ({ label: c.title, value: String(c.id) }));
   const quizOptions = (quizzes ?? []).map(q => ({ label: `${q.title} (${q.question_count} savol)`, value: String(q.id) }));
+  const quizTypeOptions = (quizTypes ?? []).map(t => ({ label: t.name, value: String(t.id) }));
+  const lessonOptions = (courseLessons ?? []).map(cl => ({ label: `${cl.module_title} → ${cl.lesson.title}`, value: String(cl.lesson.id) }));
+
+  // Quiz create form
+  const { register: regQuiz, handleSubmit: handleQuizSubmit, control: quizControl, reset: resetQuiz, formState: { errors: quizErrors } } = useForm<CreateQuizSchema>({
+    resolver: zodResolver(createQuizSchema),
+    defaultValues: { title: '', description: '', lesson: '', quiz_type: '', max_score: '100', passing_score: '60', penalty_per_retake: '10', time_limit: '900' },
+  });
+
+  const onCreateQuiz = (data: CreateQuizSchema) => {
+    createQuizMutation.mutate({
+      title: data.title,
+      description: data.description || '',
+      lesson: Number(data.lesson),
+      course: Number(selectedCourseId),
+      quiz_type: Number(data.quiz_type),
+      max_score: Number(data.max_score),
+      passing_score: Number(data.passing_score),
+      penalty_per_retake: Number(data.penalty_per_retake) || 10,
+      time_limit: Number(data.time_limit) || 900,
+    }, {
+      onSuccess: () => { setShowCreateQuiz(false); resetQuiz(); },
+    });
+  };
+
+  const handleDeleteQuiz = () => {
+    if (!selectedQuizId) return;
+    customAlert.confirm({
+      variant: 'warning',
+      title: "Testni o'chirish",
+      description: "Bu test va barcha savollari o'chiriladi. Davom etasizmi?",
+      confirmText: "O'chirish",
+      cancelText: 'Bekor qilish',
+      icon: Trash2,
+      onConfirm: () => {
+        deleteQuizMutation.mutate(Number(selectedQuizId), {
+          onSuccess: () => setSelectedQuizId(''),
+        });
+      },
+    });
+  };
 
   const questions = quizDetail?.questions ?? [];
 
@@ -47,11 +108,19 @@ const Tests = () => {
         },
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          // Upload media if selected
+          if (mediaFile && data?.data?.id) {
+            const formData = new FormData();
+            formData.append('file', mediaFile);
+            formData.append('media_type', mediaFile.type.startsWith('image') ? 'image' : mediaFile.type.startsWith('audio') ? 'audio' : 'video');
+            uploadMediaMutation.mutate({ questionId: data.data.id, formData });
+          }
           setShowAddForm(false);
           setQuestionText('');
           setAnswers(['', '', '', '']);
           setCorrectOption(0);
+          setMediaFile(null);
         },
       }
     );
@@ -91,6 +160,129 @@ const Tests = () => {
           )}
         </div>
       </div>
+
+      {/* Quiz Actions */}
+      {selectedCourseId && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setShowCreateQuiz(true)}
+            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+          >
+            <Plus className="w-4 h-4" /> Yangi test yaratish
+          </button>
+          {selectedQuizId && quizDetail && (
+            <>
+              <button
+                onClick={() => {
+                  setEditQuizData({
+                    title: quizDetail.title,
+                    max_score: String(quizDetail.max_score),
+                    passing_score: String(quizDetail.passing_score),
+                    penalty_per_retake: String(quizDetail.penalty_per_retake),
+                    time_limit: String(quizDetail.time_limit),
+                    is_active: true,
+                  });
+                  setShowEditQuiz(true);
+                }}
+                className="flex items-center gap-2 bg-[#F2F4F7] text-[#141F38] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#E4E7EC] transition-all"
+              >
+                <Pencil className="w-4 h-4" /> Sozlamalar
+              </button>
+              <button
+                onClick={handleDeleteQuiz}
+                className="flex items-center gap-2 bg-[#FEE4E2] text-[#F04438] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#F04438] hover:text-white transition-all"
+              >
+                <Trash2 className="w-4 h-4" /> O'chirish
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Create Quiz Form */}
+      {showCreateQuiz && (
+        <form onSubmit={handleQuizSubmit(onCreateQuiz)} className="bg-white p-6 md:p-8 rounded-3xl border-2 border-primary/20 shadow-xl space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xl font-black text-[#1D2939]">Yangi test yaratish</h3>
+            <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); }} className="p-2 rounded-xl hover:bg-[#F9FAFB]">
+              <X className="w-5 h-5 text-[#98A2B3]" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Test nomi *</label>
+              <input {...regQuiz('title')} placeholder="Masalan: Present Simple Quiz" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none focus:border-primary/30 ${quizErrors.title ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
+              {quizErrors.title && <p className="text-red-500 text-[11px] font-bold ml-1">{quizErrors.title.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Dars *</label>
+              <select {...regQuiz('lesson')} className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.lesson ? 'border-red-400' : 'border-[#F2F4F7]'}`}>
+                <option value="">Darsni tanlang</option>
+                {lessonOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {quizErrors.lesson && <p className="text-red-500 text-[11px] font-bold ml-1">{quizErrors.lesson.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-[#667085] ml-1">Test turi *</label>
+                <button type="button" onClick={() => setShowCreateType(!showCreateType)} className="text-[10px] font-bold text-primary hover:underline">
+                  + Yangi tur
+                </button>
+              </div>
+              {showCreateType && (
+                <div className="flex gap-2 mb-2">
+                  <input placeholder="Nomi" value={newTypeName} onChange={(e) => { setNewTypeName(e.target.value); setNewTypeSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-')); }} className="flex-1 px-3 py-2 bg-white border border-[#E4E7EC] rounded-lg text-xs font-medium outline-none" />
+                  <button type="button" onClick={() => { if (newTypeName) { createQuizTypeMutation.mutate({ name: newTypeName, slug: newTypeSlug }, { onSuccess: () => { setNewTypeName(''); setNewTypeSlug(''); setShowCreateType(false); } }); } }} disabled={!newTypeName || createQuizTypeMutation.isPending} className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-bold disabled:opacity-50">
+                    {createQuizTypeMutation.isPending ? '...' : 'Qo\'shish'}
+                  </button>
+                </div>
+              )}
+              <select {...regQuiz('quiz_type')} className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.quiz_type ? 'border-red-400' : 'border-[#F2F4F7]'}`}>
+                <option value="">Turni tanlang</option>
+                {quizTypeOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+              {quizErrors.quiz_type && <p className="text-red-500 text-[11px] font-bold ml-1">{quizErrors.quiz_type.message}</p>}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Max ball *</label>
+              <input {...regQuiz('max_score')} type="number" placeholder="100" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.max_score ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">O'tish balli *</label>
+              <input {...regQuiz('passing_score')} type="number" placeholder="60" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.passing_score ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Retake jarima</label>
+              <input {...regQuiz('penalty_per_retake')} type="number" placeholder="10" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1 flex items-center gap-1"><Clock className="w-3 h-3" /> Vaqt limiti (soniya) *</label>
+              <input {...regQuiz('time_limit')} type="number" placeholder="900 (15 daqiqa)" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.time_limit ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
+            </div>
+
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Tavsif</label>
+              <textarea {...regQuiz('description')} placeholder="Test haqida qisqacha..." className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none min-h-[80px] resize-none" />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button type="submit" disabled={createQuizMutation.isPending} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all disabled:opacity-70">
+              {createQuizMutation.isPending ? 'Yaratilmoqda...' : '+ Test yaratish'}
+            </button>
+            <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); }} className="px-6 py-3 bg-[#F2F4F7] text-[#667085] rounded-xl font-bold text-sm">
+              Bekor qilish
+            </button>
+          </div>
+        </form>
+      )}
 
       {/* Summary Cards */}
       {quizDetail && (
@@ -145,8 +337,65 @@ const Tests = () => {
         </div>
       )}
 
+      {/* Edit Quiz Inline */}
+      {showEditQuiz && quizDetail && (
+        <div className="bg-white p-6 md:p-8 rounded-3xl border border-[#F2F4F7] shadow-sm space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-black text-[#1D2939]">Test sozlamalarini tahrirlash</h3>
+            <button onClick={() => setShowEditQuiz(false)} className="p-2 rounded-xl hover:bg-[#F9FAFB]"><X className="w-4 h-4 text-[#98A2B3]" /></button>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Test nomi</label>
+              <input value={editQuizData.title} onChange={(e) => setEditQuizData(p => ({ ...p, title: e.target.value }))} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Max ball</label>
+              <input type="number" value={editQuizData.max_score} onChange={(e) => setEditQuizData(p => ({ ...p, max_score: e.target.value }))} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">O'tish balli</label>
+              <input type="number" value={editQuizData.passing_score} onChange={(e) => setEditQuizData(p => ({ ...p, passing_score: e.target.value }))} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Retake jarima</label>
+              <input type="number" value={editQuizData.penalty_per_retake} onChange={(e) => setEditQuizData(p => ({ ...p, penalty_per_retake: e.target.value }))} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Vaqt (soniya)</label>
+              <input type="number" value={editQuizData.time_limit} onChange={(e) => setEditQuizData(p => ({ ...p, time_limit: e.target.value }))} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#667085] ml-1">Holat</label>
+              <button
+                onClick={() => setEditQuizData(p => ({ ...p, is_active: !p.is_active }))}
+                className={`w-full px-4 py-3 rounded-xl text-sm font-bold transition-colors ${editQuizData.is_active ? 'bg-[#E8FFF0] text-[#22C55E]' : 'bg-[#FFF0F0] text-[#F04438]'}`}
+              >
+                {editQuizData.is_active ? 'Aktiv' : 'Nofaol'}
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              updateQuizMutation.mutate({ id: Number(selectedQuizId), data: {
+                title: editQuizData.title || undefined,
+                max_score: Number(editQuizData.max_score) || undefined,
+                passing_score: Number(editQuizData.passing_score) || undefined,
+                penalty_per_retake: Number(editQuizData.penalty_per_retake) || undefined,
+                time_limit: Number(editQuizData.time_limit) || undefined,
+                is_active: editQuizData.is_active,
+              }}, { onSuccess: () => setShowEditQuiz(false) });
+            }}
+            disabled={updateQuizMutation.isPending}
+            className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-70"
+          >
+            {updateQuizMutation.isPending ? 'Saqlanmoqda...' : 'Saqlash'}
+          </button>
+        </div>
+      )}
+
       {/* Add Question Button */}
-      {selectedQuizId && !showAddForm && (
+      {selectedQuizId && !showAddForm && !showEditQuiz && (
         <button
           onClick={() => setShowAddForm(true)}
           className="flex items-center justify-center gap-2 bg-primary text-white px-6 py-3 rounded-2xl font-black text-sm hover:shadow-2xl hover:shadow-primary/30 transition-all active:scale-95 group w-full md:w-auto"
@@ -210,6 +459,27 @@ const Tests = () => {
                   </button>
                 </div>
               ))}
+            </div>
+
+            {/* Media Upload */}
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-[#98A2B3] uppercase tracking-widest ml-4">Media (ixtiyoriy — rasm, audio, video)</label>
+              <div className="flex items-center gap-4">
+                <input
+                  type="file"
+                  accept="image/*,audio/*,video/*"
+                  onChange={(e) => setMediaFile(e.target.files?.[0] ?? null)}
+                  className="flex-1 text-sm font-medium text-[#667085] file:mr-4 file:py-2.5 file:px-5 file:rounded-xl file:border-0 file:bg-primary/10 file:text-primary file:font-bold file:text-xs file:cursor-pointer hover:file:bg-primary/20 transition-all"
+                />
+                {mediaFile && (
+                  <button onClick={() => setMediaFile(null)} className="p-2 rounded-xl hover:bg-[#FEE4E2] text-[#F04438]">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              {mediaFile && (
+                <p className="text-xs font-medium text-[#98A2B3] ml-4">{mediaFile.name} ({(mediaFile.size / 1024).toFixed(0)} KB)</p>
+              )}
             </div>
 
             <button

@@ -3,7 +3,7 @@ import { Search, Filter, Plus, Users, CheckCircle, GraduationCap, Loader2 } from
 import GroupCard from '@/components/private/admin/Groups/GroupCard';
 import ViewGroupDialog from '@/components/private/admin/Groups/ViewGroupDialog';
 import CreateGroupDialog from '@/components/private/admin/Groups/CreateGroupDialog';
-import { useCourses, useCreateCourse, useDeleteCourse } from '@/hooks/useCourses';
+import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/useCourses';
 import type { Course } from '@/types/api';
 
 const AdminGroups = () => {
@@ -14,7 +14,12 @@ const AdminGroups = () => {
 
   const { data: courses, isLoading } = useCourses();
   const createMutation = useCreateCourse();
+  const updateMutation = useUpdateCourse();
   const deleteMutation = useDeleteCourse();
+
+  const handleUpdateCourse = (id: number, data: { title?: string; max_students?: number; is_active?: boolean }) => {
+    updateMutation.mutate({ id, data });
+  };
 
   const filteredCourses = (courses ?? []).filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,7 +89,7 @@ const AdminGroups = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="bg-white rounded-[24px] p-6 border border-[#F2F4F7] shadow-sm flex items-center gap-4 hover:shadow-lg transition-shadow">
           <div className="w-14 h-14 rounded-full flex items-center justify-center shrink-0 bg-orange-50">
             <Users className="w-5 h-5 text-orange-500" />
@@ -176,6 +181,8 @@ const AdminGroups = () => {
         isOpen={selectedGroup !== null}
         onClose={() => setSelectedGroup(null)}
         group={selectedGroup}
+        onUpdate={handleUpdateCourse}
+        isUpdating={updateMutation.isPending}
       />
       <CreateGroupDialog
         isOpen={isCreateOpen}

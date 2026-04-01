@@ -15,7 +15,7 @@ const StreakGraph = () => {
         <h3 className="text-sm md:text-base font-black text-[#141F38]">Streak grafigi (30 kun)</h3>
       </div>
 
-      <div className="grid grid-cols-10 gap-1.5 md:gap-2">
+      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 md:gap-2">
         {days.map((day) => (
           <div 
             key={day.id}

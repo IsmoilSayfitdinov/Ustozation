@@ -27,6 +27,98 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
 
   const questions = quiz?.questions ?? [];
 
+  // ===== Anti-cheat: tab switch detection =====
+  const [tabWarnings, setTabWarnings] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+  const MAX_TAB_WARNINGS = 3;
+
+  useEffect(() => {
+    if (state !== 'playing') return;
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        setTabWarnings(prev => {
+          const next = prev + 1;
+          setShowTabWarning(true);
+          return next;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [state]);
+
+  // Auto-submit when max warnings reached
+  useEffect(() => {
+    if (tabWarnings >= MAX_TAB_WARNINGS && state === 'playing' && attemptId) {
+      handleComplete();
+    }
+  }, [tabWarnings]);
+
+  // ===== Anti-cheat: prevent page leave =====
+  useEffect(() => {
+    if (state !== 'playing') return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = 'Test davom etmoqda. Sahifadan chiqmoqchimisiz?';
+      return e.returnValue;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [state]);
+
+  // ===== Anti-cheat: block screenshot keys & right click =====
+  useEffect(() => {
+    if (state !== 'playing') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block PrintScreen
+      if (e.key === 'PrintScreen') {
+        e.preventDefault();
+        setTabWarnings(prev => prev + 1);
+        setShowTabWarning(true);
+      }
+      // Block Ctrl+Shift+I (DevTools)
+      if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+      }
+      // Block Ctrl+Shift+S (screenshot in some browsers)
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+      }
+      // Block Ctrl+P (print)
+      if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+      }
+      // Block F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+      }
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('contextmenu', handleContextMenu);
+
+    // CSS: prevent selection & drag
+    document.body.style.userSelect = 'none';
+    document.body.style.webkitUserSelect = 'none';
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.body.style.userSelect = '';
+      document.body.style.webkitUserSelect = '';
+    };
+  }, [state]);
+
+  // Timer
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
     if (state === 'playing' && timeLeft > 0) {
@@ -134,31 +226,57 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.1 }}
-            className="text-center space-y-8 w-full max-w-md bg-white p-10 rounded-[40px] border border-[#F2F4F7] shadow-lg"
+            className="text-center w-full max-w-lg bg-white dark:bg-[#1a1a1a] p-8 md:p-10 rounded-[32px] md:rounded-[40px] border border-[#F2F4F7] dark:border-white/10 shadow-lg space-y-6"
           >
-            <div className="w-24 h-24 bg-surface-tint rounded-3xl mx-auto flex items-center justify-center text-5xl shadow-xl shadow-surface-tint/20">
+            <div className="w-20 h-20 bg-surface-tint rounded-2xl mx-auto flex items-center justify-center text-4xl shadow-xl shadow-surface-tint/20">
               🧠
             </div>
-            <div className="space-y-4">
-              <h2 className="text-3xl font-black text-[#141F38]">{quiz?.title ?? 'Testni boshlash'}</h2>
+
+            <div className="space-y-3">
+              <h2 className="text-2xl md:text-3xl font-black text-[#141F38] dark:text-white">{quiz?.title ?? 'Testni boshlash'}</h2>
               <p className="text-[#667085] font-black text-sm">
                 {questions.length} ta savol · {Math.floor((quiz?.time_limit ?? 900) / 60)} daqiqa
               </p>
               {quiz?.description && (
-                <p className="text-[#667085] text-sm font-semibold mx-auto p-4 bg-[#F8F9FA] rounded-xl">{quiz.description}</p>
+                <p className="text-[#667085] text-sm font-semibold mx-auto p-4 bg-[#F8F9FA] dark:bg-white/5 rounded-xl">{quiz.description}</p>
               )}
             </div>
+
+            {/* Qoidalar */}
+            <div className="bg-[#FFF6ED] dark:bg-[#F97316]/10 border border-[#FDBA74]/30 dark:border-[#F97316]/20 rounded-2xl p-5 text-left space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-[#F97316] shrink-0" />
+                <h4 className="text-sm font-black text-[#141F38] dark:text-white">Test qoidalari</h4>
+              </div>
+              <ul className="space-y-2.5">
+                {[
+                  "Test davomida boshqa sahifaga o'tish taqiqlanadi",
+                  "Tab almashtirsangiz — ogohlantirish beriladi (3 ta imkoniyat)",
+                  "3 marta ogohlantirish — test avtomatik topshiriladi",
+                  "Screenshot, print va nusxa olish bloklangan",
+                  "Vaqt tugasa — test avtomatik topshiriladi",
+                ].map((rule, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <div className="w-5 h-5 rounded-full bg-[#F97316]/15 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-[10px] font-black text-[#F97316]">{i + 1}</span>
+                    </div>
+                    <span className="text-[12px] md:text-[13px] font-semibold text-[#667085] dark:text-white/60 leading-snug">{rule}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             <button
               onClick={handleStart}
               disabled={startAttempt.isPending}
               className="bg-surface-tint text-white w-full py-4 rounded-2xl font-black text-[15px] flex items-center justify-center gap-3 hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-surface-tint/20 disabled:opacity-70"
             >
-              {startAttempt.isPending ? 'Boshlanmoqda...' : 'Boshlash'}
+              {startAttempt.isPending ? 'Boshlanmoqda...' : "Roziman, boshlash"}
               <ArrowRight className="w-5 h-5" />
             </button>
             <button
                onClick={onClose}
-               className="text-[#98A2B3] font-bold text-sm mx-auto hover:text-[#141F38] transition-colors"
+               className="text-[#98A2B3] font-bold text-sm mx-auto hover:text-[#141F38] dark:hover:text-white transition-colors"
             >
                Orqaga
             </button>
@@ -173,16 +291,70 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
             exit={{ opacity: 0, x: -20 }}
             className="w-full space-y-6 md:space-y-8"
           >
+            {/* Tab Warning Overlay */}
+            <AnimatePresence>
+              {showTabWarning && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-[#141F38]/95 backdrop-blur-md z-[200] flex items-center justify-center p-6"
+                >
+                  <motion.div
+                    initial={{ scale: 0.9 }}
+                    animate={{ scale: 1 }}
+                    className="bg-white dark:bg-[#1a1a1a] rounded-[32px] p-8 md:p-10 max-w-md w-full text-center shadow-2xl space-y-6"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-[#FFF0F0] flex items-center justify-center mx-auto">
+                      <AlertTriangle className="w-8 h-8 text-[#F04438]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[#141F38] dark:text-white">Ogohlantirish!</h3>
+                      <p className="text-sm font-medium text-[#667085] dark:text-white/60 mt-2 leading-relaxed">
+                        Siz test oynasidan chiqdingiz. Bu harakatlar qayd etiladi.
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      {Array.from({ length: MAX_TAB_WARNINGS }).map((_, i) => (
+                        <div key={i} className={`w-3 h-3 rounded-full transition-colors ${i < tabWarnings ? 'bg-[#F04438]' : 'bg-[#F2F4F7]'}`} />
+                      ))}
+                    </div>
+                    <p className="text-xs font-bold text-[#F04438]">
+                      {tabWarnings >= MAX_TAB_WARNINGS
+                        ? "Limitga yetildi — test avtomatik topshirildi!"
+                        : `${MAX_TAB_WARNINGS - tabWarnings} ta imkoniyat qoldi. Keyin test avtomatik topshiriladi.`}
+                    </p>
+                    {tabWarnings < MAX_TAB_WARNINGS && (
+                      <button
+                        onClick={() => setShowTabWarning(false)}
+                        className="w-full py-3.5 bg-[#F04438] text-white font-black text-sm rounded-xl hover:bg-[#DC2626] transition-colors"
+                      >
+                        Tushundim, davom etaman
+                      </button>
+                    )}
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {/* Header / Progress Card */}
             <div className="bg-white p-5 md:p-6 rounded-[24px] border border-[#F2F4F7] flex items-center justify-between shadow-sm">
               <p className="text-sm font-black text-[#667085] flex items-center gap-2">
                  Savol <span className="text-[#141F38] bg-[#F8F9FA] px-2 py-0.5 rounded-md">{currentQuestionIndex + 1}/{questions.length}</span>
               </p>
-              <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-1.5 rounded-lg border border-[#EAECF0]">
-                <Timer className="w-4 h-4 text-[#98A2B3]" />
-                <span className="text-[13px] font-black text-[#141F38]">
-                  {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
-                </span>
+              <div className="flex items-center gap-3">
+                {tabWarnings > 0 && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFF0F0] border border-[#F04438]/20">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#F04438]" />
+                    <span className="text-[11px] font-black text-[#F04438]">{tabWarnings}/{MAX_TAB_WARNINGS}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-1.5 rounded-lg border border-[#EAECF0]">
+                  <Timer className="w-4 h-4 text-[#98A2B3]" />
+                  <span className="text-[13px] font-black text-[#141F38]">
+                    {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                  </span>
+                </div>
               </div>
             </div>
 

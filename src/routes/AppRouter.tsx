@@ -9,6 +9,7 @@ import NotFound from '../pages/public/NotFound';
 import ServerError from '../pages/public/ServerError';
 import { Wifi, WifiOff } from 'lucide-react';
 import { CustomAlertProvider } from '../components/ui/CustomAlert';
+import { useThemeStore } from '../store/useThemeStore';
 
 const router = createBrowserRouter([
   ...publicRoutes,
@@ -22,6 +23,12 @@ const router = createBrowserRouter([
 const AppRouter = () => {
   const { isOnline, isInitial } = useNetworkStatus();
   const { isServerError } = useAppStore();
+  const initThemeListener = useThemeStore((s) => s.initListener);
+
+  useEffect(() => {
+    const cleanup = initThemeListener();
+    return cleanup;
+  }, [initThemeListener]);
 
   useEffect(() => {
     if (!isOnline) {

@@ -2,29 +2,35 @@ import { useState } from 'react';
 import { Search, Plus, Trash2, UserCheck, UserX, Loader2 } from 'lucide-react';
 import { useTeachers, useCreateTeacher, useDeleteTeacher } from '@/hooks/useAuth';
 import { customAlert } from '@/components/ui/CustomAlert';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createTeacherSchema, type CreateTeacherSchema } from '@/schemas/private/admin/teacher';
 import type { TeacherListItem } from '@/types/api';
 
 const AdminTeachers = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [form, setForm] = useState({ username: '', password: '', telegram_username: '' });
 
   const { data: teachers, isLoading } = useTeachers();
   const createMutation = useCreateTeacher();
   const deleteMutation = useDeleteTeacher();
+
+  const { register, handleSubmit: handleFormSubmit, reset, formState: { errors } } = useForm<CreateTeacherSchema>({
+    resolver: zodResolver(createTeacherSchema),
+    defaultValues: { username: '', password: '', telegram_username: '' },
+  });
 
   const filtered = (teachers ?? []).filter((t) =>
     t.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (t.profile?.full_name || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleCreate = () => {
-    if (!form.username || !form.password) return;
+  const handleCreate = (data: CreateTeacherSchema) => {
     createMutation.mutate(
-      { username: form.username, password: form.password, telegram_username: form.telegram_username || undefined },
+      { username: data.username, password: data.password, telegram_username: data.telegram_username || undefined },
       {
         onSuccess: () => {
-          setForm({ username: '', password: '', telegram_username: '' });
+          reset();
           setIsCreating(false);
         },
       }
@@ -72,7 +78,7 @@ const AdminTeachers = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-[#F2F4F7]">
           <p className="text-[#98A2B3] text-xs font-bold uppercase tracking-wider">Jami</p>
           <p className="text-2xl font-black text-[#141F38] mt-1">{teachers?.length ?? 0}</p>
@@ -89,45 +95,51 @@ const AdminTeachers = () => {
 
       {/* Create Form */}
       {isCreating && (
-        <div className="bg-white p-6 rounded-2xl border border-[#F2F4F7] space-y-4">
+        <form onSubmit={handleFormSubmit(handleCreate)} className="bg-white p-6 rounded-2xl border border-[#F2F4F7] space-y-4">
           <h4 className="text-lg font-black text-[#141F38]">Yangi o'qituvchi qo'shish</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input
-              placeholder="Username"
-              value={form.username}
-              onChange={(e) => setForm(p => ({ ...p, username: e.target.value }))}
-              className="px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
-            />
-            <input
-              placeholder="Parol (kamida 8 ta belgi)"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm(p => ({ ...p, password: e.target.value }))}
-              className="px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
-            />
-            <input
-              placeholder="Telegram username (ixtiyoriy)"
-              value={form.telegram_username}
-              onChange={(e) => setForm(p => ({ ...p, telegram_username: e.target.value }))}
-              className="px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
-            />
+            <div className="space-y-1">
+              <input
+                {...register('username')}
+                placeholder="Username *"
+                className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30 ${errors.username ? 'border-red-400' : 'border-[#F2F4F7]'}`}
+              />
+              {errors.username && <p className="text-red-500 text-[11px] font-bold ml-1">{errors.username.message}</p>}
+            </div>
+            <div className="space-y-1">
+              <input
+                {...register('password')}
+                placeholder="Parol (kamida 8 ta belgi) *"
+                type="password"
+                className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30 ${errors.password ? 'border-red-400' : 'border-[#F2F4F7]'}`}
+              />
+              {errors.password && <p className="text-red-500 text-[11px] font-bold ml-1">{errors.password.message}</p>}
+            </div>
+            <div>
+              <input
+                {...register('telegram_username')}
+                placeholder="Telegram username (ixtiyoriy)"
+                className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
+              />
+            </div>
           </div>
           <div className="flex gap-3">
             <button
-              onClick={handleCreate}
-              disabled={createMutation.isPending || !form.username || !form.password}
+              type="submit"
+              disabled={createMutation.isPending}
               className="px-6 py-2.5 bg-[#F97316] text-white rounded-xl font-bold text-sm hover:-translate-y-0.5 transition-all disabled:opacity-70"
             >
               {createMutation.isPending ? 'Qo\'shilmoqda...' : 'Qo\'shish'}
             </button>
             <button
-              onClick={() => { setIsCreating(false); setForm({ username: '', password: '', telegram_username: '' }); }}
+              type="button"
+              onClick={() => { setIsCreating(false); reset(); }}
               className="px-6 py-2.5 bg-[#F2F4F7] text-[#667085] rounded-xl font-bold text-sm"
             >
               Bekor qilish
             </button>
           </div>
-        </div>
+        </form>
       )}
 
       {/* Teachers List */}

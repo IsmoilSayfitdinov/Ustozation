@@ -2,20 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { quizzesApi } from "@/api/quizzes";
 import type { QuizCreatePayload, QuizEditPayload, QuestionCreatePayload, AnswerPayload, SubmitAnswerPayload } from "@/types/api";
-import { AxiosError } from "axios";
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof AxiosError && error.response?.data) {
-    const data = error.response.data;
-    if (data.errors) {
-      const firstKey = Object.keys(data.errors)[0];
-      const val = data.errors[firstKey];
-      return Array.isArray(val) ? val[0] : val;
-    }
-    if (data.detail) return data.detail;
-  }
-  return "Xatolik yuz berdi";
-}
+import { getErrorMessage } from "@/lib/getErrorMessage";
 
 export function useQuizTypes() {
   return useQuery({
@@ -25,6 +12,23 @@ export function useQuizTypes() {
       return data.results;
     },
     staleTime: 30 * 60 * 1000,
+  });
+}
+
+export function useCreateQuizType() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string; slug: string; description?: string }) => {
+      const res = await quizzesApi.createQuizType(data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quiz-types"] });
+      toast.success("Test turi yaratildi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
   });
 }
 
@@ -115,6 +119,23 @@ export function useCreateQuestion() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
       toast.success("Savol qo'shildi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useUpdateQuestion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ questionId, data }: { questionId: number; data: { text?: string; order?: number } }) => {
+      const res = await quizzesApi.updateQuestion(questionId, data);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["quiz"] });
+      toast.success("Savol yangilandi!");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

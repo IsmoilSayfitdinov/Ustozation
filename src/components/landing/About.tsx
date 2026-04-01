@@ -1,4 +1,5 @@
 import type { Feature } from '@/types/api';
+import { useTranslation } from 'react-i18next';
 
 const DEFAULT_FEATURES = [
   { icon: 'verified_user', title: 'Sertifikatlangan', desc: "Xalqaro sertifikatlarga ega va ko'p yillik tajribali mutaxassislar dars berishadi." },
@@ -12,6 +13,7 @@ interface AboutProps {
 }
 
 const About = ({ features }: AboutProps) => {
+  const { t } = useTranslation();
   const activeFeatures = features?.filter(f => f.is_active);
   const items = activeFeatures && activeFeatures.length > 0
     ? activeFeatures.map(f => ({ icon: f.icon || 'star', title: f.title, desc: f.description }))
@@ -22,10 +24,10 @@ const About = ({ features }: AboutProps) => {
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 relative z-10">
         <div className=" mb-16 md:mb-20">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight mb-6">
-            Nega aynan <span className="text-primary underline decoration-primary/20 underline-offset-8">Ustozation</span>?
+            {t('about.title_1')} <span className="text-primary underline decoration-primary/20 underline-offset-8">{t('about.title_2')}</span>?
           </h2>
           <p className="text-on-surface-variant text-base md:text-lg leading-relaxed">
-            Biz ta'lim berishda natija va qulaylikni birinchi o'ringa qo'yamiz. Har bir detal sizning muvaffaqiyatingiz uchun xizmat qiladi.
+            {t('about.subtitle')}
           </p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">

@@ -1,0 +1,82 @@
+{
+  "nav": {
+    "about": "Platforma haqida",
+    "courses": "Kurslar",
+    "interactive": "Interaktiv",
+    "pricing": "Narxlar",
+    "reviews": "Sharhlar",
+    "faq": "FAQ",
+    "login": "Kirish"
+  },
+  "hero": {
+    "badge": "Yangi kurslar mavsumiga qabul ochiq",
+    "title_1": "Ingliz tilini",
+    "title_2": "ishonch",
+    "title_3": "bilan o'rganing",
+    "subtitle": "O'zbekistondagi yetakchi o'quv markazi bilan IELTS va Speaking darajangizni bor-yo'g'i 3 oyda kafolatli oshiring.",
+    "cta_free": "Bepul darsga yozilish",
+    "cta_video": "Batafsil video",
+    "students": "Muvaffaqiyatli talaba",
+    "rating": "Ustozlar reytingi",
+    "team": "Top Ustozlar jamoasi"
+  },
+  "about": {
+    "title_1": "Nega aynan",
+    "title_2": "Ustozation",
+    "subtitle": "Biz ta'lim berishda natija va qulaylikni birinchi o'ringa qo'yamiz. Har bir detal sizning muvaffaqiyatingiz uchun xizmat qiladi.",
+    "certified": "Sertifikatlangan",
+    "certified_desc": "Xalqaro sertifikatlarga ega va ko'p yillik tajribali mutaxassislar dars berishadi.",
+    "systematic": "Tizimli yondashuv",
+    "systematic_desc": "Noldan yuqori darajagacha bo'lgan mukammal va sinovdan o'tgan o'quv dasturi.",
+    "fast": "Tezkor natija",
+    "fast_desc": "Intensiv metodlarimiz yordamida har bir darsdan so'ng bilimingizni his qilasiz.",
+    "tech": "High-Tech",
+    "tech_desc": "Istalgan vaqtda va istalgan qurilmada bilim olish imkonini beruvchi platforma."
+  },
+  "courses": {
+    "badge": "Rivojlanish ko'prigi",
+    "title_1": "O'zingizga mos",
+    "title_2": "daraja",
+    "subtitle": "Qaysi bosqichdan boshlashingizni aniqlang va aniq maqsad sari harakat qiling."
+  },
+  "bento": {
+    "title_1": "Platformamiz",
+    "title_2": "imkoniyatlari",
+    "subtitle": "Ta'limni samarali, qiziqarli va natijaviy qiladigan zamonaviy vositalar."
+  },
+  "pricing": {
+    "badge": "Hamyonbop narxlar",
+    "title_1": "Qulay",
+    "title_2": "narxlar",
+    "subtitle": "Maqsadingiz sari birinchi qadamni tanlang. Barcha darajalar uchun moslashtirilgan o'quv rejalari.",
+    "choose": "Kursni Tanlash",
+    "start_now": "Hoziroq boshlash",
+    "most_popular": "ENG KO'P TANLANGAN",
+    "per_month": "so'm / oyniga"
+  },
+  "testimonials": {
+    "title": "O'quvchilarimiz ovozi"
+  },
+  "cta": {
+    "title": "Ingliz tilini bugun boshlang",
+    "subtitle": "Minglab o'quvchilar allaqachon o'z maqsadiga yetdi. Navbat sizda!",
+    "join": "Hoziroq a'zo bo'lish",
+    "consult": "Bepul maslahat"
+  },
+  "footer": {
+    "description": "Zamonaviy metodika va yuqori texnologiyalar yordamida sifatli ta'lim beruvchi ingliz tili platformasi.",
+    "menu": "Menyular",
+    "legal": "Huquqiy",
+    "contact": "Bog'lanish",
+    "about_us": "Biz haqimizda",
+    "our_courses": "Kurslarimiz",
+    "achievements": "Yutuqlarimiz",
+    "blog": "Blog",
+    "privacy": "Maxfiylik siyosati",
+    "offer": "Ommaviy oferta",
+    "security": "Xavfsizlik",
+    "rights": "Barcha huquqlar himoyalangan.",
+    "made_in": "Made in Uzbekistan",
+    "designed": "Designed with excellence"
+  }
+}
