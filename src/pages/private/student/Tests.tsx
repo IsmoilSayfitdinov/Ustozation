@@ -5,7 +5,7 @@ import TestTypeCard from '@/components/private/student/Tests/TestTypeCard';
 import TestHistoryItem from '@/components/private/student/Tests/TestHistoryItem';
 import TestPlayer from '@/components/private/student/Tests/TestPlayer';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuizTypes, useCourseQuizzes } from '@/hooks/useQuizzes';
+import { useQuizTypes, useCourseQuizzes, useAttemptHistory } from '@/hooks/useQuizzes';
 import { useDashboard } from '@/hooks/useAnalytics';
 import { useCourses } from '@/hooks/useCourses';
 
@@ -16,6 +16,32 @@ const TYPE_ICONS: Record<string, { icon: typeof BookOpen; iconBg: string; iconCo
   reading: { icon: BarChart3, iconBg: '#EAB3081A', iconColor: '#EAB308' },
 };
 const DEFAULT_ICON = { icon: BookOpen, iconBg: '#F973161A', iconColor: '#F97316' };
+
+// Wrapper: quiz + uning attempt tarixi
+function QuizHistoryRow({ quiz, onSelect }: { quiz: any; onSelect: () => void }) {
+  const { data: attempts } = useAttemptHistory(quiz.id);
+
+  const lastAttempt = attempts?.[0];
+  const perc = lastAttempt ? Math.round((lastAttempt.adjusted_score / lastAttempt.max_possible_score) * 100) : 0;
+  const attemptData = (attempts ?? []).map(a => ({
+    date: new Date(a.submitted_at).toLocaleDateString('uz'),
+    percentage: Math.round((a.adjusted_score / a.max_possible_score) * 100),
+  }));
+
+  return (
+    <div onClick={onSelect} className="cursor-pointer">
+      <TestHistoryItem
+        percentage={lastAttempt ? perc : 0}
+        name={quiz.title}
+        date={quiz.quiz_type.name}
+        ball={lastAttempt?.adjusted_score ?? quiz.passing_score}
+        score={lastAttempt ? `${lastAttempt.adjusted_score}/${lastAttempt.max_possible_score}` : `0/${quiz.max_score}`}
+        time={lastAttempt ? `${Math.floor(lastAttempt.time_spent / 60)}:${String(lastAttempt.time_spent % 60).padStart(2, '0')}` : `${Math.floor(quiz.time_limit / 60)} daq`}
+        attempts={attemptData}
+      />
+    </div>
+  );
+}
 
 const StudentTests = () => {
   const [selectedQuiz, setSelectedQuiz] = useState<{ id: number } | null>(null);
@@ -114,20 +140,9 @@ const StudentTests = () => {
               <div className="space-y-6">
                 <h3 className="text-xl font-bold text-[#141F38]">Test tarixi</h3>
                 <div className="space-y-4">
-                  {allQuizzes.map((quiz) => {
-                    const perc = quiz.max_score > 0 ? Math.round((quiz.passing_score / quiz.max_score) * 100) : 0;
-                    return (
-                      <TestHistoryItem
-                        key={quiz.id}
-                        percentage={perc}
-                        name={quiz.title}
-                        date={quiz.quiz_type.name}
-                        ball={quiz.passing_score}
-                        score={`${quiz.passing_score}/${quiz.max_score}`}
-                        time={`${Math.floor(quiz.time_limit / 60)}:${String(quiz.time_limit % 60).padStart(2, '0')}`}
-                      />
-                    );
-                  })}
+                  {allQuizzes.map((quiz) => (
+                    <QuizHistoryRow key={quiz.id} quiz={quiz} onSelect={() => setSelectedQuiz(quiz)} />
+                  ))}
                 </div>
               </div>
             ) : (

@@ -3,7 +3,7 @@ import { Plus, X, HelpCircle, Layers, CheckCircle, AlertTriangle, Save, Check, L
 import QuestionCard from '@/components/private/admin/Tests/QuestionCard';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { useCourses, useCourseLessons } from '@/hooks/useCourses';
-import { useCourseQuizzes, useQuizDetail, useCreateQuestion, useDeleteQuestion, useCreateQuiz, useUpdateQuiz, useDeleteQuiz, useQuizTypes, useCreateQuizType, useUploadMedia, useDeleteMedia, useUpdateAnswers } from '@/hooks/useQuizzes';
+import { useCourseQuizzes, useQuizDetail, useCreateQuestion, useUpdateQuestion, useDeleteQuestion, useCreateQuiz, useUpdateQuiz, useDeleteQuiz, useQuizTypes, useCreateQuizType, useUploadMedia, useDeleteMedia, useUpdateAnswers } from '@/hooks/useQuizzes';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createQuizSchema, type CreateQuizSchema } from '@/schemas/private/admin/quiz';
@@ -35,6 +35,7 @@ const Tests = () => {
   const uploadMediaMutation = useUploadMedia();
   const deleteMediaMutation = useDeleteMedia();
   const createQuizTypeMutation = useCreateQuizType();
+  const updateQuestionMutation = useUpdateQuestion();
   const updateAnswersMutation = useUpdateAnswers();
   const [showCreateType, setShowCreateType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
@@ -48,7 +49,7 @@ const Tests = () => {
   const lessonOptions = (courseLessons ?? []).map(cl => ({ label: `${cl.module_title} → ${cl.lesson.title}`, value: String(cl.lesson.id) }));
 
   // Quiz create form
-  const { register: regQuiz, handleSubmit: handleQuizSubmit, control: quizControl, reset: resetQuiz, formState: { errors: quizErrors } } = useForm<CreateQuizSchema>({
+  const { register: regQuiz, handleSubmit: handleQuizSubmit, reset: resetQuiz, formState: { errors: quizErrors } } = useForm<CreateQuizSchema>({
     resolver: zodResolver(createQuizSchema),
     defaultValues: { title: '', description: '', lesson: '', quiz_type: '', max_score: '100', passing_score: '60', penalty_per_retake: '10', time_limit: '900' },
   });
@@ -552,28 +553,46 @@ const Tests = () => {
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {questions.map((q, idx) => (
             <QuestionCard
               key={q.id}
               number={idx + 1}
+              questionId={q.id}
               category={quizDetail?.quiz_type.name ?? ''}
-              points={0}
-              penalty={0}
               question={q.text}
-              options={q.answers.map((a, i) => ({
-                id: String.fromCharCode(65 + i),
+              answers={q.answers.map((a: any) => ({
+                id: a.id,
                 text: a.text,
-                isCorrect: false, // teacher view shows is_correct from backend
+                is_correct: a.is_correct,
+                order: a.order,
               }))}
-              media={q.media?.[0] && (q.media[0].media_type === 'image' || q.media[0].media_type === 'video') ? {
-                type: q.media[0].media_type,
-                url: q.media[0].file,
-              } : undefined}
+              media={q.media ?? []}
               onDelete={() => {
-                if (window.confirm("Savolni o'chirishni xohlaysizmi?")) {
-                  deleteQuestionMutation.mutate(q.id);
-                }
+                customAlert.confirm({
+                  variant: 'warning',
+                  title: "Savolni o'chirish",
+                  description: `${idx + 1}-savol o'chiriladi.`,
+                  confirmText: "O'chirish",
+                  cancelText: 'Bekor qilish',
+                  icon: Trash2,
+                  onConfirm: () => deleteQuestionMutation.mutate(q.id),
+                });
+              }}
+              onEditQuestion={(qId, data) => {
+                updateQuestionMutation.mutate({ questionId: qId, data });
+              }}
+              onUpdateAnswers={(qId, answerData) => {
+                updateAnswersMutation.mutate({ questionId: qId, answers: answerData });
+              }}
+              onUploadMedia={(qId, file, mediaType) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('media_type', mediaType);
+                uploadMediaMutation.mutate({ questionId: qId, formData });
+              }}
+              onDeleteMedia={(mediaId) => {
+                deleteMediaMutation.mutate(mediaId);
               }}
             />
           ))}

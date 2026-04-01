@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Flame, BookOpen, Trophy, BarChart3, Clock } from 'lucide-react';
+import { Flame, BookOpen, Trophy, BarChart3, Clock, Lock, Eye, EyeOff } from 'lucide-react';
 import ProfileHeader from '@/components/private/student/Profile/ProfileHeader';
 import ProfileStatCard from '@/components/private/student/Profile/ProfileStatCard';
 import AchievementCard from '@/components/private/student/Profile/AchievementCard';
 import EditProfileForm from '@/components/private/student/Profile/EditProfileForm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMe } from '@/hooks/useAuth';
+import { useMe, useChangePassword } from '@/hooks/useAuth';
 import { useDashboard } from '@/hooks/useAnalytics';
 import { useStreak } from '@/hooks/useGamification';
 
@@ -15,6 +15,76 @@ const ACHIEVEMENTS = [
   { id: 3, title: 'Birinchi test', description: 'Birinchi testni topshirdingiz', icon: '🏆' },
   { id: 4, title: 'Top 10', description: 'Reytingda top 10 ga kirdingiz', icon: '⭐' },
 ];
+
+const ChangePasswordSection = () => {
+  const [showForm, setShowForm] = useState(false);
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [form, setForm] = useState({ old_password: '', new_password: '', new_password_confirm: '' });
+  const [error, setError] = useState('');
+  const changePassword = useChangePassword();
+
+  const handleSubmit = () => {
+    setError('');
+    if (form.new_password.length < 8) { setError("Yangi parol kamida 8 ta belgi bo'lishi kerak"); return; }
+    if (form.new_password !== form.new_password_confirm) { setError("Parollar mos kelmadi"); return; }
+    changePassword.mutate(form, {
+      onSuccess: () => { setShowForm(false); setForm({ old_password: '', new_password: '', new_password_confirm: '' }); },
+      onError: () => setError("Joriy parol noto'g'ri yoki server xatosi"),
+    });
+  };
+
+  if (!showForm) {
+    return (
+      <button onClick={() => setShowForm(true)} className="flex items-center gap-3 px-6 py-4 bg-white rounded-2xl border border-[#F2F4F7] hover:border-primary/20 hover:shadow-md transition-all w-full text-left group">
+        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+          <Lock className="w-5 h-5 text-primary group-hover:text-white" />
+        </div>
+        <div>
+          <p className="text-sm font-black text-[#141F38]">Parolni o'zgartirish</p>
+          <p className="text-[11px] font-medium text-[#98A2B3]">Xavfsizlik uchun parolni yangilang</p>
+        </div>
+      </button>
+    );
+  }
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-[#F2F4F7] space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="text-lg font-black text-[#141F38]">Parolni o'zgartirish</h4>
+        <button onClick={() => { setShowForm(false); setError(''); }} className="p-2 rounded-xl hover:bg-[#F2F4F7] text-[#98A2B3]">
+          <Lock className="w-4 h-4" />
+        </button>
+      </div>
+      <div className="space-y-3">
+        <div className="relative">
+          <input type={showOld ? 'text' : 'password'} placeholder="Joriy parol" value={form.old_password} onChange={(e) => setForm(p => ({ ...p, old_password: e.target.value }))}
+            className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-primary/30 pr-12" />
+          <button type="button" onClick={() => setShowOld(!showOld)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#98A2B3]">
+            {showOld ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <div className="relative">
+          <input type={showNew ? 'text' : 'password'} placeholder="Yangi parol (kamida 8 ta belgi)" value={form.new_password} onChange={(e) => setForm(p => ({ ...p, new_password: e.target.value }))}
+            className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-primary/30 pr-12" />
+          <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#98A2B3]">
+            {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        </div>
+        <input type="password" placeholder="Yangi parolni tasdiqlang" value={form.new_password_confirm} onChange={(e) => setForm(p => ({ ...p, new_password_confirm: e.target.value }))}
+          className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-primary/30" />
+      </div>
+      {error && <p className="text-[#F04438] text-xs font-bold">{error}</p>}
+      <div className="flex gap-3">
+        <button onClick={handleSubmit} disabled={changePassword.isPending || !form.old_password || !form.new_password}
+          className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-sm disabled:opacity-60">
+          {changePassword.isPending ? 'Saqlanmoqda...' : "O'zgartirish"}
+        </button>
+        <button onClick={() => setShowForm(false)} className="px-6 py-2.5 bg-[#F2F4F7] text-[#667085] rounded-xl font-bold text-sm">Bekor qilish</button>
+      </div>
+    </div>
+  );
+};
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -95,6 +165,12 @@ const Profile = () => {
                   />
                 ))}
               </div>
+            </div>
+
+            {/* Parol o'zgartirish */}
+            <div className="space-y-6">
+              <h3 className="text-xl font-bold text-[#141F38] ml-2">Xavfsizlik</h3>
+              <ChangePasswordSection />
             </div>
           </motion.div>
         ) : (

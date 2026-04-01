@@ -77,6 +77,50 @@ export function useLevelDetail(id: number) {
   });
 }
 
+export function useModules(levelId: number) {
+  return useQuery({
+    queryKey: ["modules", levelId],
+    queryFn: async () => {
+      const { data } = await coursesApi.getModules(levelId);
+      return data.results;
+    },
+    enabled: !!levelId,
+  });
+}
+
+export function useModuleDetail(id: number) {
+  return useQuery({
+    queryKey: ["module", id],
+    queryFn: async () => {
+      const { data } = await coursesApi.getModule(id);
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
+export function useLessons(moduleId: number) {
+  return useQuery({
+    queryKey: ["lessons", moduleId],
+    queryFn: async () => {
+      const { data } = await coursesApi.getLessons(moduleId);
+      return data.results;
+    },
+    enabled: !!moduleId,
+  });
+}
+
+export function useLessonDetail(id: number) {
+  return useQuery({
+    queryKey: ["lesson", id],
+    queryFn: async () => {
+      const { data } = await coursesApi.getLesson(id);
+      return data;
+    },
+    enabled: !!id,
+  });
+}
+
 export function useCourses() {
   return useQuery({
     queryKey: ["courses"],
