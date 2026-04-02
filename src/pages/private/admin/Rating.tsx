@@ -1,14 +1,26 @@
-import { Trophy, Medal, Star, Award, Crown, Loader2, Flame } from 'lucide-react';
+import { useState } from 'react';
+import { Trophy, Medal, Star, Award, Crown, Loader2, Flame, Clock } from 'lucide-react';
 import { useRanking } from '@/hooks/useGamification';
+import { useCourses } from '@/hooks/useCourses';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 const Rating = () => {
-  const { data: ranking, isLoading } = useRanking();
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
+  const { data: courses } = useCourses();
+  const { data: ranking, isLoading } = useRanking(Number(selectedCourseId) || undefined);
 
+  const courseOptions = (courses ?? []).map(c => ({ label: c.title, value: String(c.id) }));
   const allRanking = ranking ?? [];
   const top3 = allRanking.slice(0, 3);
 
   const getInitials = (name: string) =>
     name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
 
   return (
     <div className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out pb-12">
@@ -16,15 +28,18 @@ const Rating = () => {
         <h2 className="text-3xl md:text-4xl font-black text-[#1D2939] tracking-tight">Reyting</h2>
       </div>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            <p className="text-sm font-bold text-[#98A2B3]">Reyting yuklanmoqda...</p>
-          </div>
-        </div>
-      ) : allRanking.length === 0 ? (
-        /* Empty State */
+      {/* Course Selection */}
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider">Guruh tanlang</label>
+        <CustomSelect
+          options={courseOptions}
+          value={selectedCourseId}
+          onChange={setSelectedCourseId}
+          placeholder="Reytingni ko'rish uchun guruhni tanlang..."
+        />
+      </div>
+
+      {!selectedCourseId ? (
         <div className="bg-white rounded-[40px] border border-[#F2F4F7] overflow-hidden">
           <div className="flex flex-col items-center justify-center py-28 px-6">
             <div className="relative mb-8">
@@ -35,9 +50,23 @@ const Rating = () => {
                 <Crown className="w-5 h-5 text-amber-500" />
               </div>
             </div>
-            <h3 className="text-2xl font-black text-[#1D2939] mb-3">Reyting hali bo'sh</h3>
+            <h3 className="text-2xl font-black text-[#1D2939] mb-3">Guruhni tanlang</h3>
             <p className="text-sm font-medium text-[#98A2B3] text-center max-w-lg leading-relaxed">
-              Talabalar test topshirgandan so'ng reyting avtomatik shakllanadi. Ball, streak va vaqt bo'yicha saralanadi.
+              Guruh reytingini ko'rish uchun yuqoridan guruhni tanlang
+            </p>
+          </div>
+        </div>
+      ) : isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      ) : allRanking.length === 0 ? (
+        <div className="bg-white rounded-[40px] border border-[#F2F4F7] overflow-hidden">
+          <div className="flex flex-col items-center justify-center py-28 px-6">
+            <Trophy className="w-14 h-14 text-[#98A2B3] mb-6" />
+            <h3 className="text-2xl font-black text-[#1D2939] mb-3">Reyting hali bo'sh</h3>
+            <p className="text-sm font-medium text-[#98A2B3] text-center max-w-lg">
+              Talabalar test topshirgandan so'ng reyting shakllanadi
             </p>
           </div>
         </div>
@@ -118,12 +147,13 @@ const Rating = () => {
             </div>
 
             <div className="overflow-x-auto no-scrollbar">
-              <table className="w-full min-w-[500px] border-collapse whitespace-nowrap">
+              <table className="w-full min-w-[600px] border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="bg-[#F9FAFB]/30">
                     <th className="text-left py-4 px-4 md:py-6 md:px-8 text-[11px] font-black text-[#98A2B3] uppercase tracking-widest">#</th>
                     <th className="text-left py-4 px-4 md:py-6 md:px-8 text-[11px] font-black text-[#98A2B3] uppercase tracking-widest">Talaba</th>
                     <th className="text-center py-4 px-4 md:py-6 md:px-8 text-[11px] font-black text-[#98A2B3] uppercase tracking-widest">Streak</th>
+                    <th className="text-center py-4 px-4 md:py-6 md:px-8 text-[11px] font-black text-[#98A2B3] uppercase tracking-widest">O'rt. vaqt</th>
                     <th className="text-right py-4 px-4 md:py-6 md:px-8 text-[11px] font-black text-[#98A2B3] uppercase tracking-widest">Ball</th>
                   </tr>
                 </thead>
@@ -152,6 +182,12 @@ const Rating = () => {
                         <div className="flex items-center justify-center gap-1 font-black text-sm text-[#1D2939]">
                           {student.streak}
                           <Flame className="w-4 h-4 text-[#F04438]" fill="currentColor" />
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 md:py-6 md:px-8">
+                        <div className="flex items-center justify-center gap-1 text-sm font-bold text-[#667085]">
+                          <Clock className="w-3.5 h-3.5" />
+                          {formatTime(student.avg_time)}
                         </div>
                       </td>
                       <td className="py-4 px-4 md:py-6 md:px-8 text-right font-black text-[#1D2939]">

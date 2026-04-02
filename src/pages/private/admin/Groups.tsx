@@ -4,6 +4,7 @@ import GroupCard from '@/components/private/admin/Groups/GroupCard';
 import ViewGroupDialog from '@/components/private/admin/Groups/ViewGroupDialog';
 import CreateGroupDialog from '@/components/private/admin/Groups/CreateGroupDialog';
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/useCourses';
+import { useAuthStore } from '@/store/useAuthStore';
 import type { Course } from '@/types/api';
 
 const AdminGroups = () => {
@@ -11,6 +12,8 @@ const AdminGroups = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Course | null>(null);
+  const { user } = useAuthStore();
+  const isTeacher = user?.role === 'teacher';
 
   const { data: courses, isLoading } = useCourses();
   const createMutation = useCreateCourse();
@@ -23,7 +26,7 @@ const AdminGroups = () => {
 
   const filteredCourses = (courses ?? []).filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.teacher_name.toLowerCase().includes(searchQuery.toLowerCase());
+      (course.teacher?.full_name || course.teacher?.username || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' ||
       (statusFilter === 'active' && course.is_active) ||
       (statusFilter === 'inactive' && !course.is_active);
@@ -78,13 +81,15 @@ const AdminGroups = () => {
             </select>
           </div>
 
-          <button
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 bg-[#F97316] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
-          >
-            <Plus className="w-5 h-5" />
-            Yangi guruh
-          </button>
+          {isTeacher && (
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className="flex items-center gap-2 bg-[#F97316] text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
+            >
+              <Plus className="w-5 h-5" />
+              Yangi guruh
+            </button>
+          )}
         </div>
       </div>
 
@@ -169,8 +174,8 @@ const AdminGroups = () => {
               key={course.id}
               group={course}
               onView={() => setSelectedGroup(course)}
-              onEdit={() => setSelectedGroup(course)}
-              onDelete={() => handleDelete(course.id)}
+              onEdit={isTeacher ? () => setSelectedGroup(course) : undefined}
+              onDelete={isTeacher ? () => handleDelete(course.id) : undefined}
             />
           ))}
         </div>
@@ -181,7 +186,7 @@ const AdminGroups = () => {
         isOpen={selectedGroup !== null}
         onClose={() => setSelectedGroup(null)}
         group={selectedGroup}
-        onUpdate={handleUpdateCourse}
+        onUpdate={isTeacher ? handleUpdateCourse : undefined}
         isUpdating={updateMutation.isPending}
       />
       <CreateGroupDialog

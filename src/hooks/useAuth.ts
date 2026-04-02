@@ -47,7 +47,7 @@ export function useTeachers() {
       const { data } = await authApi.getTeachers();
       return data.results;
     },
-    staleTime: 30 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -130,6 +130,7 @@ export function useUpdateProfile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Profil yangilandi!");
     },
     onError: (error) => {
@@ -158,12 +159,47 @@ export function useLogout() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  return () => {
+  return async () => {
+    // Blacklist refresh token on backend
+    const refresh = localStorage.getItem("refresh_token");
+    if (refresh) {
+      try { await authApi.logout(refresh); } catch { /* ignore */ }
+    }
     logout();
     queryClient.clear();
     navigate("/login");
     toast.success("Tizimdan chiqdingiz");
   };
+}
+
+export function useRequestPasswordReset() {
+  return useMutation({
+    mutationFn: async (data: { username: string }) => {
+      const res = await authApi.requestPasswordReset(data);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Parol tiklash so'rovi yuborildi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useConfirmPasswordReset() {
+  return useMutation({
+    mutationFn: async (data: { token: string; new_password: string; new_password_confirm: string }) => {
+      const res = await authApi.confirmPasswordReset(data);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Parol muvaffaqiyatli tiklandi!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
 }
 
 export function useEnroll() {
@@ -177,7 +213,30 @@ export function useEnroll() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["ranking"] });
       toast.success("Guruhga muvaffaqiyatli qo'shildingiz!");
+    },
+    onError: (error) => {
+      toast.error(getErrorMessage(error));
+    },
+  });
+}
+
+export function useUnenroll() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (courseId: number) => {
+      const res = await coursesApi.unenroll(courseId);
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["ranking"] });
+      toast.success("Kursdan chiqdingiz");
     },
     onError: (error) => {
       toast.error(getErrorMessage(error));

@@ -129,7 +129,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                     <User className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">O'qituvchi</span>
                   </div>
-                  <p className="font-bold text-[#1C2434] text-sm">{group.teacher_name}</p>
+                  <p className="font-bold text-[#1C2434] text-sm">{group.teacher?.full_name || group.teacher?.username || ''}</p>
                 </div>
                 <div className="bg-[#F9FAFB] p-4 rounded-xl border border-[#F2F4F7]">
                   <div className="flex items-center gap-2 text-[#98A2B3] mb-1">

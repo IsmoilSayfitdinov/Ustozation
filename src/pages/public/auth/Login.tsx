@@ -87,7 +87,10 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="text-center">
+        <div className="text-center space-y-3">
+          <Link to="/forgot-password" className="text-[#667085] font-medium text-sm hover:text-primary transition-colors">
+            Parolni unutdingiz?
+          </Link>
           <p className="text-on-surface-variant font-medium text-sm">
             Hisobingiz yo'qmi?{' '}
             <Link to="/register" className="text-primary font-bold hover:underline">

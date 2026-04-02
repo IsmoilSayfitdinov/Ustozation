@@ -30,6 +30,18 @@ client.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config as RetryConfig;
 
+    // 403 with expired/invalid token — clear tokens and retry without auth
+    if (error.response?.status === 403 && !originalRequest._retry) {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        // Token mavjud lekin 403 keldi — token noto'g'ri bo'lishi mumkin
+        // Public endpoint bo'lsa tokensiz qayta urinib ko'ramiz
+        originalRequest._retry = true;
+        delete originalRequest.headers.Authorization;
+        return client(originalRequest);
+      }
+    }
+
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }

@@ -127,7 +127,7 @@ const StudentLessons = () => {
         </div>
 
         {/* Exercises */}
-        <div className="pt-2">
+        <div className="pt-4 md:pt-6">
            <ExerciseGrid />
         </div>
       </div>

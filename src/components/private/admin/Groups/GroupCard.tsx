@@ -66,9 +66,9 @@ const GroupCard: React.FC<GroupCardProps> = ({ group, onView, onEdit, onDelete }
         {/* Teacher */}
         <div className="flex items-center gap-3">
           <div className="w-6 h-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[10px] font-bold">
-            {getInitials(group.teacher_name)}
+            {getInitials(group.teacher?.full_name || group.teacher?.username || '')}
           </div>
-          <p className="text-[#667085] text-sm font-medium">{group.teacher_name}</p>
+          <p className="text-[#667085] text-sm font-medium">{group.teacher?.full_name || group.teacher?.username || ''}</p>
         </div>
 
         {/* Progress */}

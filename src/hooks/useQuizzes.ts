@@ -11,7 +11,7 @@ export function useQuizTypes() {
       const { data } = await quizzesApi.getQuizTypes();
       return data.results;
     },
-    staleTime: 30 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -100,6 +100,7 @@ export function useDeleteQuiz() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["quiz"] });
       toast.success("Test o'chirildi!");
     },
     onError: (error) => {
@@ -118,6 +119,7 @@ export function useCreateQuestion() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
+      queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
       toast.success("Savol qo'shildi!");
     },
     onError: (error) => {
@@ -152,6 +154,7 @@ export function useDeleteQuestion() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["quiz"] });
+      queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
       toast.success("Savol o'chirildi!");
     },
     onError: (error) => {
@@ -239,6 +242,10 @@ export function useSubmitAttempt() {
       queryClient.invalidateQueries({ queryKey: ["streak"] });
       queryClient.invalidateQueries({ queryKey: ["points"] });
       queryClient.invalidateQueries({ queryKey: ["ranking"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["grammar-mastery"] });
+      queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
+      queryClient.invalidateQueries({ queryKey: ["attempt-history"] });
     },
     onError: () => {
       toast.error("Javoblarni topshirishda xatolik");

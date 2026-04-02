@@ -6,8 +6,11 @@ const registerSchema = z.object({
   gender: z.string().optional(),
   age: z.string().optional(),
   course_id: z.string().optional(),
-  teacher_id: z.string().optional(),
   password: z.string().min(8, "Parol kamida 8 ta belgidan iborat bo'lishi kerak"),
+  password_confirm: z.string().min(1, "Parolni tasdiqlang"),
+}).refine(data => data.password === data.password_confirm, {
+  message: "Parollar mos kelmadi",
+  path: ["password_confirm"],
 });
 
 type RegisterSchema = z.infer<typeof registerSchema>;

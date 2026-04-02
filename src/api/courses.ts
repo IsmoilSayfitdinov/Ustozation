@@ -79,6 +79,9 @@ export const coursesApi = {
   enroll: (courseId: number) =>
     client.post<ApiResponse<null>>("/courses/enroll/", { course_id: courseId }),
 
+  unenroll: (courseId: number) =>
+    client.post<ApiResponse<null>>(`/courses/${courseId}/unenroll/`),
+
   // Course lessons
   getCourseLessons: (courseId: number) =>
     client.get<PaginatedResponse<CourseLesson>>(`/courses/${courseId}/lessons/`),

@@ -12,6 +12,33 @@ import { IMaskInput } from 'react-imask';
 
 type Tab = 'reviews' | 'pricing' | 'features' | 'settings';
 
+const ICON_OPTIONS = [
+  { value: 'verified_user', label: 'Sertifikat' },
+  { value: 'auto_graph', label: 'Grafik' },
+  { value: 'rocket_launch', label: 'Raketa' },
+  { value: 'devices', label: 'Qurilmalar' },
+  { value: 'school', label: 'Maktab' },
+  { value: 'menu_book', label: 'Kitob' },
+  { value: 'psychology', label: 'Aql' },
+  { value: 'groups', label: 'Guruh' },
+  { value: 'workspace_premium', label: 'Premium' },
+  { value: 'star', label: 'Yulduz' },
+  { value: 'support_agent', label: "Qo'llab-quvvatlash" },
+  { value: 'translate', label: 'Tarjima' },
+  { value: 'emoji_events', label: 'Kubok' },
+  { value: 'trending_up', label: "O'sish" },
+  { value: 'timer', label: 'Taymer' },
+  { value: 'task_alt', label: 'Vazifa' },
+  { value: 'lightbulb', label: 'Fikr' },
+  { value: 'shield', label: 'Himoya' },
+  { value: 'headphones', label: 'Audio' },
+  { value: 'videocam', label: 'Video' },
+  { value: 'forum', label: 'Forum' },
+  { value: 'schedule', label: 'Vaqt' },
+  { value: 'bolt', label: 'Tezlik' },
+  { value: 'volunteer_activism', label: 'Yordam' },
+];
+
 const TABS: { key: Tab; label: string; icon: typeof MessageSquare }[] = [
   { key: 'reviews', label: 'Izohlar', icon: MessageSquare },
   { key: 'pricing', label: 'Tariflar', icon: CreditCard },
@@ -384,12 +411,25 @@ function FeaturesTab() {
               onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
               className="px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
             />
-            <input
-              placeholder="Icon nomi (masalan: Sparkles)"
-              value={form.icon}
-              onChange={(e) => setForm(p => ({ ...p, icon: e.target.value }))}
-              className="px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30"
-            />
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                {form.icon && (
+                  <div className="w-10 h-10 rounded-xl bg-[#F97316]/10 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-[#F97316] text-xl">{form.icon}</span>
+                  </div>
+                )}
+                <select
+                  value={form.icon}
+                  onChange={(e) => setForm(p => ({ ...p, icon: e.target.value }))}
+                  className="flex-1 px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30 appearance-none cursor-pointer"
+                >
+                  <option value="">Icon tanlang</option>
+                  {ICON_OPTIONS.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label} ({opt.value})</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           </div>
           <textarea
             placeholder="Tavsif..."
@@ -429,7 +469,7 @@ function FeaturesTab() {
         {(features ?? []).map((f) => (
           <div key={f.id} className="bg-white p-5 rounded-2xl border border-[#F2F4F7] flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-[#F973161A] flex items-center justify-center text-[#F97316] font-black text-lg shrink-0">
-              {f.icon?.charAt(0) || '?'}
+              <span className="material-symbols-outlined text-lg">{f.icon || 'star'}</span>
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">

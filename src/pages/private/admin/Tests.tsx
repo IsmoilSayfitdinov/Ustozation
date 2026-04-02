@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { Plus, X, HelpCircle, Layers, CheckCircle, AlertTriangle, Save, Check, Loader2, Trash2, Clock, Pencil } from 'lucide-react';
 import QuestionCard from '@/components/private/admin/Tests/QuestionCard';
 import CustomSelect from '@/components/ui/CustomSelect';
-import { useCourses, useCourseLessons } from '@/hooks/useCourses';
+import { useCourses, useCourseLessons, useLevels, useLevelDetail } from '@/hooks/useCourses';
 import { useCourseQuizzes, useQuizDetail, useCreateQuestion, useUpdateQuestion, useDeleteQuestion, useCreateQuiz, useUpdateQuiz, useDeleteQuiz, useQuizTypes, useCreateQuizType, useUploadMedia, useDeleteMedia, useUpdateAnswers } from '@/hooks/useQuizzes';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createQuizSchema, type CreateQuizSchema } from '@/schemas/private/admin/quiz';
 import { customAlert } from '@/components/ui/CustomAlert';
+import { toast } from 'sonner';
 
 const Tests = () => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
@@ -22,6 +23,7 @@ const Tests = () => {
   const [mediaFile, setMediaFile] = useState<File | null>(null);
 
   const { data: courses } = useCourses();
+  const { data: levels } = useLevels();
   const { data: quizzes, isLoading: quizzesLoading } = useCourseQuizzes(Number(selectedCourseId) || 0);
   const { data: quizDetail, isLoading: quizLoading } = useQuizDetail(Number(selectedQuizId) || 0);
   const { data: quizTypes } = useQuizTypes();
@@ -48,25 +50,35 @@ const Tests = () => {
   const quizTypeOptions = (quizTypes ?? []).map(t => ({ label: t.name, value: String(t.id) }));
   const lessonOptions = (courseLessons ?? []).map(cl => ({ label: `${cl.module_title} → ${cl.lesson.title}`, value: String(cl.lesson.id) }));
 
+  // Template rejim
+  const [selectedTemplateLevel, setSelectedTemplateLevel] = useState('');
+  const levelOptions = (levels ?? []).map(l => ({ label: l.name, value: String(l.id) }));
+  const { data: levelDetail } = useLevelDetail(Number(selectedTemplateLevel) || 0);
+  const templateLessonOptions = (levelDetail?.modules ?? []).flatMap(m =>
+    m.lessons.map(l => ({ label: `${m.title} → ${l.title}`, value: String(l.id) }))
+  );
+
   // Quiz create form
   const { register: regQuiz, handleSubmit: handleQuizSubmit, reset: resetQuiz, formState: { errors: quizErrors } } = useForm<CreateQuizSchema>({
     resolver: zodResolver(createQuizSchema),
     defaultValues: { title: '', description: '', lesson: '', quiz_type: '', max_score: '100', passing_score: '60', penalty_per_retake: '10', time_limit: '900' },
   });
 
+  const [isTemplateMode, setIsTemplateMode] = useState(false);
+
   const onCreateQuiz = (data: CreateQuizSchema) => {
     createQuizMutation.mutate({
       title: data.title,
       description: data.description || '',
       lesson: Number(data.lesson),
-      course: Number(selectedCourseId),
+      course: isTemplateMode ? null : Number(selectedCourseId) || null,
       quiz_type: Number(data.quiz_type),
       max_score: Number(data.max_score),
       passing_score: Number(data.passing_score),
       penalty_per_retake: Number(data.penalty_per_retake) || 10,
       time_limit: Number(data.time_limit) || 900,
     }, {
-      onSuccess: () => { setShowCreateQuiz(false); resetQuiz(); },
+      onSuccess: () => { setShowCreateQuiz(false); resetQuiz(); setIsTemplateMode(false); },
     });
   };
 
@@ -90,14 +102,24 @@ const Tests = () => {
   const questions = quizDetail?.questions ?? [];
 
   const handleCreateQuestion = () => {
-    if (!selectedQuizId || !questionText.trim()) return;
+    if (!selectedQuizId || !questionText.trim()) {
+      toast.error("Savol matnini kiriting");
+      return;
+    }
     const answerPayloads = answers.map((text, idx) => ({
       text,
       is_correct: idx === correctOption,
       order: idx + 1,
     })).filter(a => a.text.trim());
 
-    if (answerPayloads.length < 2) return;
+    if (answerPayloads.length < 2) {
+      toast.error("Kamida 2 ta javob kiritilishi shart");
+      return;
+    }
+    if (!answerPayloads.some(a => a.is_correct)) {
+      toast.error("Kamida 1 ta to'g'ri javob belgilanishi kerak");
+      return;
+    }
 
     createQuestionMutation.mutate(
       {
@@ -164,13 +186,13 @@ const Tests = () => {
 
       {/* Quiz Actions */}
       {selectedCourseId && (
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setShowCreateQuiz(true)}
-            className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
-          >
-            <Plus className="w-4 h-4" /> Yangi test yaratish
-          </button>
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => { setShowCreateQuiz(true); setIsTemplateMode(false); }}
+          className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all"
+        >
+          <Plus className="w-4 h-4" /> Yangi test yaratish
+        </button>
           {selectedQuizId && quizDetail && (
             <>
               <button
@@ -204,11 +226,26 @@ const Tests = () => {
       {showCreateQuiz && (
         <form onSubmit={handleQuizSubmit(onCreateQuiz)} className="bg-white p-6 md:p-8 rounded-3xl border-2 border-primary/20 shadow-xl space-y-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-black text-[#1D2939]">Yangi test yaratish</h3>
-            <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); }} className="p-2 rounded-xl hover:bg-[#F9FAFB]">
+            <div>
+              <h3 className="text-xl font-black text-[#1D2939]">
+                {isTemplateMode ? 'Shablon test yaratish' : 'Yangi test yaratish'}
+              </h3>
+              {isTemplateMode && (
+                <p className="text-xs font-medium text-[#98A2B3] mt-1">Shablon testlar yangi kurs yaratilganda avtomatik klonlanadi</p>
+              )}
+            </div>
+            <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); setIsTemplateMode(false); }} className="p-2 rounded-xl hover:bg-[#F9FAFB]">
               <X className="w-5 h-5 text-[#98A2B3]" />
             </button>
           </div>
+
+          {isTemplateMode && (
+            <div className="bg-[#FFF6ED] border border-[#FDBA74]/30 rounded-xl p-3">
+              <p className="text-[11px] font-medium text-[#F97316]">
+                Shablon test hech qaysi kursga biriktirilmaydi. Yangi kurs yaratilganda avtomatik klonlanadi.
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2 space-y-1.5">
@@ -217,11 +254,21 @@ const Tests = () => {
               {quizErrors.title && <p className="text-red-500 text-[11px] font-bold ml-1">{quizErrors.title.message}</p>}
             </div>
 
+            {isTemplateMode && (
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#667085] ml-1">Daraja</label>
+                <select value={selectedTemplateLevel} onChange={(e) => setSelectedTemplateLevel(e.target.value)} className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none">
+                  <option value="">Darajani tanlang</option>
+                  {levelOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-[#667085] ml-1">Dars *</label>
               <select {...regQuiz('lesson')} className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.lesson ? 'border-red-400' : 'border-[#F2F4F7]'}`}>
                 <option value="">Darsni tanlang</option>
-                {lessonOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                {(isTemplateMode ? templateLessonOptions : lessonOptions).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
               {quizErrors.lesson && <p className="text-red-500 text-[11px] font-bold ml-1">{quizErrors.lesson.message}</p>}
             </div>
@@ -561,7 +608,7 @@ const Tests = () => {
               questionId={q.id}
               category={quizDetail?.quiz_type.name ?? ''}
               question={q.text}
-              answers={q.answers.map((a: any) => ({
+              answers={q.answers.map((a: { id: number; text: string; is_correct?: boolean; order: number }) => ({
                 id: a.id,
                 text: a.text,
                 is_correct: a.is_correct,

@@ -12,13 +12,37 @@ export function useStreak() {
   });
 }
 
-export function useRanking() {
+// Student: courseId yo'q → o'z kursining reytingi
+// Teacher/Admin: courseId bor → shu kursning reytingi
+export function useRanking(courseId?: number) {
   return useQuery({
-    queryKey: ["ranking"],
+    queryKey: courseId ? ["ranking", courseId] : ["ranking"],
     queryFn: async () => {
-      const { data } = await gamificationApi.getRanking();
+      const { data } = await gamificationApi.getRanking(courseId);
       return data.data;
     },
+  });
+}
+
+export function useBadges() {
+  return useQuery({
+    queryKey: ["badges"],
+    queryFn: async () => {
+      const { data } = await gamificationApi.getBadges();
+      return data.results;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useMyBadges() {
+  return useQuery({
+    queryKey: ["my-badges"],
+    queryFn: async () => {
+      const { data } = await gamificationApi.getMyBadges();
+      return data.data;
+    },
+    staleTime: 2 * 60 * 1000,
   });
 }
 

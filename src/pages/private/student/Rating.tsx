@@ -52,7 +52,7 @@ const StudentRating = () => {
 
   return (
     <>
-      <h2 className='text-2xl md:text-3xl font-black text-[#141F38] tracking-tight mb-4 md:mb-0'>Reyting</h2>
+      <h2 className='text-2xl md:text-3xl font-black text-[#141F38] tracking-tight mb-4 md:mb-6'>Reyting</h2>
 
       <div className='bg-[#F8F9FA] p-5 md:p-12 rounded-3xl md:rounded-[40px] space-y-10 md:space-y-16'>
         {topThree.length >= 3 && (

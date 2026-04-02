@@ -2,6 +2,7 @@ import { useParams, useNavigate, Navigate } from 'react-router-dom';
 import Parent from '@/pages/public/landing/Parent';
 import Login from '@/pages/public/auth/Login';
 import Register from '@/pages/public/auth/Register';
+import ForgotPassword from '@/pages/public/auth/ForgotPassword';
 import CourseDetail from '@/components/landing/CourseDetail';
 import { LEVELS } from '@/data/courses';
 import { useLandingPage } from '@/hooks/useLanding';
@@ -46,5 +47,6 @@ export const publicRoutes = [
   { path: '/', element: <Parent /> },
   { path: '/login', element: <Login /> },
   { path: '/register', element: <Register /> },
+  { path: '/forgot-password', element: <ForgotPassword /> },
   { path: '/course/:id', element: <CourseDetailRoute /> },
 ];

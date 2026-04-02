@@ -208,6 +208,23 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
     );
   }
 
+  if (!quiz && !quizLoading) {
+    return (
+      <div className="bg-[#F8F9FA] min-h-[400px] rounded-[32px] p-8 flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <div className="w-16 h-16 rounded-2xl bg-[#FFF0F0] flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-8 h-8 text-[#F04438]" />
+          </div>
+          <h3 className="text-xl font-black text-[#141F38]">Test topilmadi</h3>
+          <p className="text-sm font-medium text-[#667085]">Bu dars uchun test hali yaratilmagan yoki sizga ruxsat yo'q.</p>
+          <button onClick={onClose} className="bg-[#F2F4F7] text-[#141F38] px-6 py-3 rounded-xl font-bold text-sm hover:bg-[#E4E7EC] transition-colors">
+            Orqaga qaytish
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const currentQuestion = questions[currentQuestionIndex];
   const progress = questions.length > 0 ? ((currentQuestionIndex + 1) / questions.length) * 100 : 0;
 
@@ -475,13 +492,38 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 </div>
               </div>
 
-              <button
-                onClick={onClose}
-                className="bg-surface-tint hover:bg-[#EA580C] text-white w-full max-w-sm mx-auto py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 shadow-xl shadow-surface-tint/20 transition-all active:scale-[0.98]"
-              >
-                <Trophy className="w-5 h-5"/>
-                Yakunlash va reytingni ko'rish
-              </button>
+              {/* Retry info */}
+              {quiz && (
+                <div className="bg-[#FFF6ED] border border-[#FDBA74]/30 rounded-2xl p-4 max-w-sm mx-auto w-full">
+                  <p className="text-xs font-bold text-[#141F38] text-center">
+                    Qayta topshirish mumkin — har safar <span className="text-[#F97316]">-{quiz.penalty_per_retake} ball</span> kamayadi
+                  </p>
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto w-full">
+                <button
+                  onClick={() => {
+                    setState('start');
+                    setAttemptId(null);
+                    setAnswers({});
+                    setCurrentQuestionIndex(0);
+                    setTabWarnings(0);
+                    setQuestionTimes({});
+                  }}
+                  className="flex-1 bg-[#F2F4F7] hover:bg-[#E4E7EC] text-[#141F38] py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-[0.98]"
+                >
+                  <RotateCcw className="w-4 h-4"/>
+                  Qayta topshirish
+                </button>
+                <button
+                  onClick={onClose}
+                  className="flex-1 bg-surface-tint hover:bg-[#EA580C] text-white py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 shadow-xl shadow-surface-tint/20 transition-all active:scale-[0.98]"
+                >
+                  <Trophy className="w-5 h-5"/>
+                  Yakunlash
+                </button>
+              </div>
             </div>
 
             {/* Answer Breakdown Accordion */}

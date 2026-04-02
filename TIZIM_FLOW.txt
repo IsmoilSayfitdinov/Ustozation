@@ -1,0 +1,227 @@
+=====================================================
+  USTOZATION — TIZIM FLOW
+  Frontend + Backend integratsiya
+=====================================================
+
+1. REGISTRATSIYA FLOW
+─────────────────────
+Student → /register sahifasi
+  ├── username, password, password_confirm kiritadi
+  ├── telegram, jins, yosh (ixtiyoriy)
+  ├── Kurs tanlaydi (ixtiyoriy) → GET /courses/ (AllowAny)
+  ├── POST /auth/register/ yuboriladi
+  ├── Backend: User yaratiladi (role=student)
+  ├── Agar course_id berilsa → Enrollment avtomatik yaratiladi
+  └── Redirect → /login
+
+2. LOGIN FLOW
+─────────────
+Student/Teacher/Admin → /login sahifasi
+  ├── username + password kiritadi
+  ├── POST /auth/login/ yuboriladi
+  ├── Backend: JWT access + refresh token qaytaradi
+  ├── Frontend: localStorage ga saqlanadi
+  ├── GET /auth/me/ → user profili olinadi
+  └── Redirect → role bo'yicha:
+      ├── student → /student/dashboard
+      └── teacher/admin → /admin/dashboard
+
+3. PAROL TIKLASH FLOW
+─────────────────────
+Student → /forgot-password sahifasi
+  ├── username kiritadi
+  ├── POST /auth/password-reset/ (AllowAny)
+  ├── Backend: Token yaratiladi
+  ├── Token kiritadi + yangi parol
+  ├── POST /auth/password-reset/confirm/
+  └── Redirect → /login
+
+4. TEACHER KURS YARATISH FLOW
+─────────────────────────────
+Teacher → /admin/groups sahifasi
+  ├── "Yangi guruh" tugmasini bosadi
+  ├── Nom, daraja, max talabalar kiritadi
+  ├── POST /courses/create/ (IsTeacher)
+  ├── Backend (atomik tranzaksiya):
+  │   ├── Course yaratiladi (teacher=request.user)
+  │   ├── Barcha darslar uchun CourseLesson yaratiladi (is_unlocked=false)
+  │   └── Template quizlar klonlanadi (course=null → course=X)
+  └── Guruhlar ro'yxati yangilanadi
+
+5. TEACHER DARS OCHISH FLOW
+────────────────────────────
+Teacher → /admin/groups → Guruhni bosadi
+  ├── "Darslar boshqaruvi" bo'limi ochiladi
+  ├── Har bir dars yonida "Yopiq" tugma bor
+  ├── Tugma bosilganda → POST /courses/{id}/lessons/toggle/
+  │   Body: { lesson_id: X, unlock: true }
+  ├── Backend: CourseLesson.is_unlocked = true
+  └── Student endi bu darsni va uning testlarini ko'ra oladi
+
+6. TEACHER TEST YARATISH FLOW
+──────────────────────────────
+Teacher → /admin/tests sahifasi
+  ├── Guruh tanlaydi → GET /quizzes/course/{id}/ (IsTeacher)
+  ├── "Yangi test yaratish" tugmasini bosadi
+  ├── Dars, tur, nom, ball, vaqt kiritadi
+  ├── POST /quizzes/create/ (IsTeacher)
+  ├── Savol qo'shish:
+  │   ├── Savol matni + 4 ta javob + to'g'ri belgilash
+  │   ├── POST /quizzes/{id}/questions/ (IsTeacher)
+  │   ├── Media yuklash (ixtiyoriy):
+  │   │   └── POST /quizzes/questions/{id}/media/
+  │   └── Javoblar yangilash:
+  │       └── PUT /quizzes/questions/{id}/answers/
+  └── Test tayyor — student ko'ra oladi (agar dars ochiq bo'lsa)
+
+7. STUDENT TEST ISHLASH FLOW
+─────────────────────────────
+Student → /student/tests sahifasi
+  ├── GET /courses/{id}/lessons/ → darslar + quizlar ro'yxati
+  ├── Ochiq darsni bosadi → quiz kartochkani bosadi
+  ├── TestPlayer ochiladi:
+  │   ├── GET /quizzes/{id}/ → savollar yuklanadi
+  │   │   Backend tekshiradi:
+  │   │   ├── Enrollment mavjudmi? (403 agar yo'q)
+  │   │   └── Dars ochiqmi? (403 agar yopiq)
+  │   ├── Qoidalar ko'rsatiladi (anti-cheat)
+  │   ├── "Roziman, boshlash" bosiladi
+  │   ├── POST /quizzes/{id}/start/ (IsStudent)
+  │   │   Backend:
+  │   │   ├── Attempt yaratiladi
+  │   │   ├── attempt_number hisoblanadi
+  │   │   └── max_possible_score = max_score - (penalty * (attempt-1))
+  │   ├── Timer boshlanadi
+  │   ├── Savollar ko'rsatiladi (is_correct YASHIRIN)
+  │   ├── Anti-cheat faol:
+  │   │   ├── Tab almashtirsa → ogohlantirish (3 ta imkoniyat)
+  │   │   ├── PrintScreen, F12, Ctrl+P bloklangan
+  │   │   └── Right-click, text select bloklangan
+  │   ├── Javoblar tanlanadi
+  │   ├── POST /quizzes/attempts/{id}/submit/ (IsStudent)
+  │   │   Backend (atomik):
+  │   │   ├── Ball hisoblanadi
+  │   │   ├── is_passed = (adjusted_score >= passing_score)
+  │   │   ├── [Celery] AI insight generatsiya
+  │   │   ├── [Celery] Grammar mastery yangilash
+  │   │   ├── ActivityLog → streak hisoblanadi
+  │   │   ├── PointTransaction → ball beriladi
+  │   │   └── Badge tekshiriladi
+  │   └── Natija ko'rsatiladi:
+  │       ├── Ball, foiz, to'g'ri/noto'g'ri soni
+  │       ├── Har bir savol tafsiloti
+  │       ├── "Qayta topshirish" tugmasi (penalty info bilan)
+  │       └── AI tavsiyalar
+
+8. QAYTA TOPSHIRISH (RETAKE) FLOW
+──────────────────────────────────
+Student → Test natijasi sahifasida "Qayta topshirish" bosadi
+  ├── TestPlayer qayta ochiladi
+  ├── POST /quizzes/{id}/start/ → yangi attempt
+  │   attempt_number = oldingi + 1
+  │   max_possible_score = max_score - (penalty * (attempt_number - 1))
+  │   Masalan: 100 → 90 → 80 → 70 → ...
+  ├── Limitlash yo'q — cheksiz qayta topshirish
+  └── Har safar ball kamayadi
+
+9. GAMIFICATION FLOW
+────────────────────
+Streak:
+  ├── Har kun test topshirsa → streak +1
+  ├── 1 kun o'tkazsa → streak 0 ga tushadi
+  └── GET /gamification/streak/
+
+Reyting:
+  ├── Kurs ichida talabalar reytingi
+  ├── Saralash: ball ↓ → streak ↓ → vaqt ↑
+  ├── Student: GET /gamification/ranking/ (o'z kursi)
+  └── Teacher: GET /gamification/ranking/?course_id=X
+
+Ball:
+  ├── Test topshirganda ball beriladi
+  ├── Tarix: oxirgi 50 ta tranzaksiya
+  └── GET /gamification/points/
+
+Badge:
+  ├── Shartlar: first_quiz, streak_days, quizzes_passed, total_points
+  ├── Avtomatik beriladi (test topshirganda tekshiriladi)
+  ├── GET /gamification/badge-types/ (barcha badge turlari)
+  └── GET /gamification/my-badges/ (olingan badgelar)
+
+10. ANALYTICS FLOW
+──────────────────
+Student Dashboard: GET /analytics/dashboard/
+  └── total_points, streak, quizzes_taken/passed, average_score, rank, course_name
+
+AI Insights: GET /analytics/insights/
+  └── quiz_title, insight_text, recommendations, weak_areas
+
+Vocabulary: GET /analytics/vocabulary/
+  └── word, translation, lesson_title
+
+Grammar Mastery: GET /analytics/grammar-mastery/
+  └── topic, mastery_percentage
+
+Teacher Analytics:
+  ├── GET /analytics/courses/{id}/stats/ → kurs statistikasi
+  ├── GET /analytics/courses/{id}/students/{id}/ → talaba tafsiloti
+  ├── GET /analytics/courses/{id}/students/{id}/pdf/ → talaba PDF
+  └── GET /analytics/courses/{id}/students/pdf/ → kurs PDF
+
+11. ADMIN BOSHQARUV FLOW
+─────────────────────────
+Admin (faqat admin roli):
+  ├── O'qituvchilar CRUD: GET/POST/DELETE /auth/teachers/
+  ├── Level CRUD: GET/POST/PUT/DELETE /courses/levels/
+  ├── Module CRUD: POST/PUT/DELETE /courses/levels/{id}/modules/ + /modules/{id}/
+  ├── Landing CRUD:
+  │   ├── Izohlar: /reviews/
+  │   ├── Tariflar: /pricing/
+  │   ├── Xususiyatlar: /features/
+  │   └── Sozlamalar: /settings/
+  └── Faqat ko'rish: guruhlar, testlar, talabalar
+
+Teacher (teacher roli):
+  ├── Guruh yaratish/tahrirlash/o'chirish
+  ├── Dars ochish/yopish
+  ├── Test yaratish/tahrirlash/o'chirish
+  ├── Savol/javob/media CRUD
+  ├── Talabalar ro'yxati
+  └── Statistika va PDF hisobot
+
+12. LANDING PAGE FLOW
+─────────────────────
+Foydalanuvchi → / (landing sahifa)
+  ├── Splash screen (2 soniya minimum)
+  ├── GET /landing/ (AllowAny, 24 soat cache)
+  │   └── levels, stats, reviews, pricing, features, contact
+  ├── i18n: UZ/EN til almashtirish
+  ├── Dark mode: toggle
+  └── /login yoki /register ga yo'naltirish
+
+13. ROL HUQUQLARI
+─────────────────
+Student:
+  ├── Dashboard, Lessons, Tests, Rating, Analytics, Profile, Review
+  ├── Test ishlash, qayta topshirish
+  ├── Kursga yozilish / chiqish
+  └── Parol o'zgartirish / tiklash
+
+Teacher:
+  ├── Barcha student sahifalari + admin panel
+  ├── Guruh CRUD, dars toggle, test CRUD
+  ├── Savol/javob/media CRUD
+  ├── Talabalar statistikasi, PDF
+  └── O'qituvchilar/Landing ko'rinmaydi
+
+Admin:
+  ├── Barcha teacher imkoniyatlari
+  ├── O'qituvchilar CRUD
+  ├── Level/Module CRUD
+  ├── Landing sahifa boshqaruvi
+  └── Sayt sozlamalari
+
+=====================================================
+  Barcha API lar frontend da ulangan: 75/75
+  Hujjat yangilangan: 2026-04-02
+=====================================================

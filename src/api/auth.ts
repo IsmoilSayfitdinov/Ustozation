@@ -31,6 +31,17 @@ export const authApi = {
   changePassword: (data: ChangePasswordPayload) =>
     client.post<ApiResponse<null>>("/auth/change-password/", data),
 
+  // Password Reset
+  requestPasswordReset: (data: { username: string }) =>
+    client.post<ApiResponse<null>>("/auth/password-reset/", data),
+
+  confirmPasswordReset: (data: { token: string; new_password: string; new_password_confirm: string }) =>
+    client.post<ApiResponse<null>>("/auth/password-reset/confirm/", data),
+
+  // Logout (blacklist refresh token)
+  logout: (refresh: string) =>
+    client.post("/auth/logout/", { refresh }),
+
   // --- Teacher CRUD (Admin only) ---
   getTeachers: () =>
     client.get<PaginatedResponse<TeacherListItem>>("/auth/teachers/"),

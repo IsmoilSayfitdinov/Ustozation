@@ -10,7 +10,7 @@ export function useLevels() {
       const { data } = await coursesApi.getLevels();
       return data.results;
     },
-    staleTime: 30 * 60 * 1000,
+    staleTime: 2 * 60 * 1000,
   });
 }
 
@@ -163,6 +163,8 @@ export function useCreateCourse() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       toast.success("Guruh muvaffaqiyatli yaratildi!");
     },
     onError: (error) => {
@@ -181,6 +183,8 @@ export function useUpdateCourse() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["course-students"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
       toast.success("Guruh yangilandi!");
     },
     onError: (error) => {
@@ -198,6 +202,9 @@ export function useDeleteCourse() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["courses"] });
+      queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["course-lessons"] });
+      queryClient.invalidateQueries({ queryKey: ["course-students"] });
       toast.success("Guruh o'chirildi!");
     },
     onError: (error) => {
@@ -216,6 +223,7 @@ export function useCreateModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({ queryKey: ["level"] });
       toast.success("Modul qo'shildi!");
     },
     onError: (error) => {
@@ -252,6 +260,7 @@ export function useDeleteModule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({ queryKey: ["level"] });
       toast.success("Modul o'chirildi!");
     },
     onError: (error) => {
@@ -270,6 +279,7 @@ export function useCreateLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({ queryKey: ["level"] });
       toast.success("Dars qo'shildi!");
     },
     onError: (error) => {
@@ -306,6 +316,7 @@ export function useDeleteLesson() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["levels"] });
+      queryClient.invalidateQueries({ queryKey: ["level"] });
       toast.success("Dars o'chirildi!");
     },
     onError: (error) => {

@@ -5,7 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { registerSchema, type RegisterSchema } from '@/schemas/auth/register';
 import AuthLayout from './AuthLayout';
-import { useRegister, useTeachers } from '@/hooks/useAuth';
+import { useRegister } from '@/hooks/useAuth';
 import { useCourses } from '@/hooks/useCourses';
 import CustomSelect from '@/components/ui/CustomSelect';
 
@@ -16,18 +16,13 @@ const genderOptions = [
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const registerMutation = useRegister();
   const { data: courses } = useCourses();
-  const { data: teachers } = useTeachers();
 
   const courseOptions = (courses ?? []).map((c) => ({
     label: `${c.title} (${c.level.name})`,
     value: String(c.id),
-  }));
-
-  const teacherOptions = (teachers ?? []).map((t) => ({
-    label: t.profile?.full_name || t.username,
-    value: String(t.id),
   }));
 
   const {
@@ -43,12 +38,11 @@ const Register = () => {
     registerMutation.mutate({
       username: data.username,
       password: data.password,
-      password_confirm: data.password,
+      password_confirm: data.password_confirm,
       telegram_username: data.telegram_username || undefined,
       gender: data.gender || undefined,
       age: data.age ? Number(data.age) : undefined,
-      course: data.course_id ? Number(data.course_id) : undefined,
-      teacher: data.teacher_id ? Number(data.teacher_id) : undefined,
+      course_id: data.course_id ? Number(data.course_id) : undefined,
     });
   };
 
@@ -65,7 +59,7 @@ const Register = () => {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">
-                Foydalanuvchi nomi
+                Foydalanuvchi nomi *
               </label>
               <input
                 {...register('username')}
@@ -130,7 +124,7 @@ const Register = () => {
 
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">
-              Qaysi kursda o'qiyapsiz
+              Qaysi kursga yozilmoqchisiz
             </label>
             <Controller
               name="course_id"
@@ -144,35 +138,18 @@ const Register = () => {
                 />
               )}
             />
+            <p className="text-[10px] font-medium text-[#98A2B3] ml-1">Kurs tanlasangiz avtomatik yozilasiz</p>
           </div>
 
           <div className="space-y-2">
             <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">
-              O'qituvchi
-            </label>
-            <Controller
-              name="teacher_id"
-              control={control}
-              render={({ field }) => (
-                <CustomSelect
-                  options={teacherOptions}
-                  value={field.value ?? undefined}
-                  onChange={field.onChange}
-                  placeholder="O'qituvchini tanlang"
-                />
-              )}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">
-              Parol
+              Parol *
             </label>
             <div className="relative">
               <input
                 {...register('password')}
                 type={showPassword ? "text" : "password"}
-                placeholder="........"
+                placeholder="Kamida 8 ta belgi"
                 className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-[#F97316]/20 transition-all font-medium text-[#1C2434] text-sm ${
                   errors.password ? 'ring-2 ring-red-500/50' : ''
                 }`}
@@ -187,6 +164,32 @@ const Register = () => {
             </div>
             {errors.password && (
               <p className="text-red-500 text-[10px] font-bold ml-1">{errors.password.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">
+              Parolni tasdiqlang *
+            </label>
+            <div className="relative">
+              <input
+                {...register('password_confirm')}
+                type={showConfirm ? "text" : "password"}
+                placeholder="Parolni qayta kiriting"
+                className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-[#F97316]/20 transition-all font-medium text-[#1C2434] text-sm ${
+                  errors.password_confirm ? 'ring-2 ring-red-500/50' : ''
+                }`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-[#F97316] transition-colors cursor-pointer"
+              >
+                {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            {errors.password_confirm && (
+              <p className="text-red-500 text-[10px] font-bold ml-1">{errors.password_confirm.message}</p>
             )}
           </div>
 

@@ -26,6 +26,9 @@ export interface PaginatedResponse<T> {
 export interface TokenPair {
   access: string;
   refresh: string;
+  role?: string;
+  username?: string;
+  user_id?: number;
 }
 
 export interface Profile {
@@ -53,13 +56,41 @@ export interface RegisterPayload {
   telegram_username?: string;
   gender?: string;
   age?: number;
-  course?: string | number;
+  course_id?: number;
+  course?: string | number; // deprecated alias
   teacher?: string | number;
 }
 
 export interface LoginPayload {
   username: string;
   password: string;
+}
+
+export interface PasswordResetRequestPayload {
+  username: string;
+}
+
+export interface PasswordResetConfirmPayload {
+  token: string;
+  new_password: string;
+  new_password_confirm: string;
+}
+
+export interface BadgeType {
+  id: number;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+  condition_type: 'first_quiz' | 'streak_days' | 'quizzes_passed' | 'total_points';
+  condition_value: number;
+  order: number;
+}
+
+export interface StudentBadge {
+  id: number;
+  badge: BadgeType;
+  earned_at: string;
 }
 
 export interface ChangePasswordPayload {
@@ -106,16 +137,35 @@ export interface LevelDetail extends Level {
   modules: Module[];
 }
 
+export interface CourseTeacher {
+  id: number;
+  username: string;
+  full_name: string;
+  telegram_username: string;
+}
+
 export interface Course {
   id: number;
   title: string;
   level: Level;
-  teacher_name: string;
+  teacher: CourseTeacher;
+  teacher_name?: string; // deprecated, backward compat
   student_count: number;
   max_students: number;
   is_full: boolean;
   is_active: boolean;
   created_at: string;
+}
+
+export interface CourseLessonQuiz {
+  id: number;
+  title: string;
+  quiz_type_name: string;
+  question_count: number;
+  max_score: number;
+  passing_score: number;
+  time_limit: number;
+  is_active: boolean;
 }
 
 export interface CourseLesson {
@@ -124,6 +174,7 @@ export interface CourseLesson {
   module_title: string;
   is_unlocked: boolean;
   unlocked_at: string | null;
+  quizzes: CourseLessonQuiz[];
 }
 
 export interface CourseStudent {
@@ -350,7 +401,7 @@ export interface LessonCreatePayload {
 // --- Quiz CRUD (Teacher) ---
 export interface QuizCreatePayload {
   lesson: number;
-  course: number;
+  course?: number | null;
   quiz_type: number;
   title: string;
   description?: string;

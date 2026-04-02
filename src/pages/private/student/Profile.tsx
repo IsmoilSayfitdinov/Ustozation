@@ -5,16 +5,18 @@ import ProfileStatCard from '@/components/private/student/Profile/ProfileStatCar
 import AchievementCard from '@/components/private/student/Profile/AchievementCard';
 import EditProfileForm from '@/components/private/student/Profile/EditProfileForm';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useMe, useChangePassword } from '@/hooks/useAuth';
+import { useMe, useChangePassword, useUnenroll } from '@/hooks/useAuth';
+import { useCourses } from '@/hooks/useCourses';
+import { LogOut as LogOutIcon } from 'lucide-react';
 import { useDashboard } from '@/hooks/useAnalytics';
-import { useStreak } from '@/hooks/useGamification';
+import { useStreak, useBadges, useMyBadges } from '@/hooks/useGamification';
 
-const ACHIEVEMENTS = [
-  { id: 1, title: '7 kunlik streak', description: 'Ketma-ket 7 kun mashq', icon: '🔥' },
-  { id: 2, title: '100 ta so\'z', description: '100 ta yangi so\'z o\'rgandingiz', icon: '📚' },
-  { id: 3, title: 'Birinchi test', description: 'Birinchi testni topshirdingiz', icon: '🏆' },
-  { id: 4, title: 'Top 10', description: 'Reytingda top 10 ga kirdingiz', icon: '⭐' },
-];
+const BADGE_ICONS: Record<string, string> = {
+  first_quiz: '🏆',
+  streak_days: '🔥',
+  quizzes_passed: '📚',
+  total_points: '⭐',
+};
 
 const ChangePasswordSection = () => {
   const [showForm, setShowForm] = useState(false);
@@ -86,11 +88,50 @@ const ChangePasswordSection = () => {
   );
 };
 
+const UnenrollSection = ({ courseName }: { courseName: string }) => {
+  const unenroll = useUnenroll();
+  const { data: courses } = useCourses();
+  const course = courses?.find(c => c.title === courseName);
+
+  if (!course) return null;
+
+  return (
+    <button
+      onClick={() => {
+        if (window.confirm(`"${courseName}" kursidan chiqmoqchimisiz?`)) {
+          unenroll.mutate(course.id);
+        }
+      }}
+      disabled={unenroll.isPending}
+      className="flex items-center gap-3 px-6 py-4 bg-white rounded-2xl border border-[#FEE4E2] hover:border-[#F04438]/30 hover:shadow-md transition-all w-full text-left group"
+    >
+      <div className="w-10 h-10 rounded-xl bg-[#FEE4E2] flex items-center justify-center group-hover:bg-[#F04438] transition-colors">
+        <LogOutIcon className="w-5 h-5 text-[#F04438] group-hover:text-white" />
+      </div>
+      <div>
+        <p className="text-sm font-black text-[#F04438]">{unenroll.isPending ? 'Chiqilmoqda...' : 'Kursdan chiqish'}</p>
+        <p className="text-[11px] font-medium text-[#98A2B3]">{courseName}</p>
+      </div>
+    </button>
+  );
+};
+
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const { data: user, isLoading: userLoading } = useMe();
   const { data: dashboard, isLoading: dashLoading } = useDashboard();
   const { data: streak } = useStreak();
+  const { data: allBadges } = useBadges();
+  const { data: myBadges } = useMyBadges();
+
+  const earnedIds = new Set((myBadges ?? []).map(b => b.badge.id));
+  const badges = (allBadges ?? []).map(b => ({
+    id: b.id,
+    title: b.name,
+    description: b.description,
+    icon: b.icon || BADGE_ICONS[b.condition_type] || '🎯',
+    earned: earnedIds.has(b.id),
+  }));
 
   if (userLoading || dashLoading) {
     return (
@@ -116,7 +157,7 @@ const Profile = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-5">
         <h1 className="text-3xl md:text-4xl font-black text-[#141F38] tracking-tight">Profil</h1>
       </div>
 
@@ -155,22 +196,30 @@ const Profile = () => {
 
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-[#141F38] ml-2">Yutuqlar</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {ACHIEVEMENTS.map((achievement) => (
-                  <AchievementCard
-                    key={achievement.id}
-                    icon={achievement.icon}
-                    title={achievement.title}
-                    description={achievement.description}
-                  />
-                ))}
-              </div>
+              {badges.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {badges.map((badge) => (
+                    <div key={badge.id} className={`${badge.earned ? '' : 'opacity-40 grayscale'}`}>
+                      <AchievementCard
+                        icon={badge.icon}
+                        title={badge.title}
+                        description={badge.description}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-[#F2F4F7]">
+                  <p className="text-[#98A2B3] font-bold text-sm">Yutuqlar tez kunda qo'shiladi</p>
+                </div>
+              )}
             </div>
 
-            {/* Parol o'zgartirish */}
+            {/* Parol o'zgartirish va kursdan chiqish */}
             <div className="space-y-6">
               <h3 className="text-xl font-bold text-[#141F38] ml-2">Xavfsizlik</h3>
               <ChangePasswordSection />
+              {dashboard?.course_name && <UnenrollSection courseName={dashboard.course_name} />}
             </div>
           </motion.div>
         ) : (

@@ -46,14 +46,14 @@ export function useGlobalSearch(query: string) {
       for (const course of courses) {
         if (
           course.title.toLowerCase().includes(q) ||
-          course.teacher_name.toLowerCase().includes(q) ||
+          (course.teacher?.full_name || course.teacher?.username || '').toLowerCase().includes(q) ||
           course.level.name.toLowerCase().includes(q)
         ) {
           items.push({
             id: `g-${course.id}`,
             type: 'group',
             title: course.title,
-            subtitle: `${course.level.name} · ${course.teacher_name} · ${course.student_count} talaba`,
+            subtitle: `${course.level.name} · ${course.teacher?.full_name || course.teacher?.username} · ${course.student_count} talaba`,
             path: '/admin/groups',
             icon: 'Layers',
           });
