@@ -15,6 +15,17 @@ export function useQuizTypes() {
   });
 }
 
+export function useTemplateQuizzes(levelId: number) {
+  return useQuery({
+    queryKey: ["template-quizzes", levelId],
+    queryFn: async () => {
+      const { data } = await quizzesApi.getTemplateQuizzes(levelId);
+      return data.results;
+    },
+    enabled: !!levelId,
+  });
+}
+
 export function useCreateQuizType() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -64,6 +75,7 @@ export function useCreateQuiz() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["course-quizzes"] });
+      queryClient.invalidateQueries({ queryKey: ["template-quizzes"] });
       toast.success("Test yaratildi!");
     },
     onError: (error) => {

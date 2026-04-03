@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Timer, ArrowRight, Trophy, ChevronDown, ChevronUp, AlertTriangle, BookOpen, Clock, BarChart3, RotateCcw } from 'lucide-react';
+import { Timer, ArrowRight, ArrowLeft, Trophy, ChevronDown, ChevronUp, AlertTriangle, BookOpen, Clock, BarChart3, RotateCcw, Send, X, Maximize2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizDetail, useStartAttempt, useSubmitAttempt } from '@/hooks/useQuizzes';
+import { useInsights } from '@/hooks/useAnalytics';
 import type { SubmitAnswerPayload } from '@/types/api';
 
 interface TestPlayerProps {
@@ -21,9 +22,13 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
   const questionStartRef = useRef<number>(Date.now());
   const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
 
+  // Media lightbox
+  const [lightbox, setLightbox] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
+
   const { data: quiz, isLoading: quizLoading } = useQuizDetail(quizId);
   const startAttempt = useStartAttempt();
   const submitAttempt = useSubmitAttempt();
+  const { data: insights } = useInsights();
 
   const questions = quiz?.questions ?? [];
 
@@ -153,22 +158,41 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
   };
 
   const handleSelectOption = (questionId: number, answerId: number) => {
-    // Record time spent on this question
-    const timeSpent = (Date.now() - questionStartRef.current) / 1000;
-    setQuestionTimes(prev => ({
-      ...prev,
-      [questionId]: (prev[questionId] || 0) + timeSpent
-    }));
-
     setAnswers(prev => ({ ...prev, [questionId]: answerId }));
+  };
 
-    setTimeout(() => {
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex(prev => prev + 1);
-      } else {
-        handleComplete();
-      }
-    }, 500); // Small delay to let user see selection
+  const handleNext = () => {
+    // Record time spent on current question
+    const qId = questions[currentQuestionIndex]?.id;
+    if (qId) {
+      const timeSpent = (Date.now() - questionStartRef.current) / 1000;
+      setQuestionTimes(prev => ({
+        ...prev,
+        [qId]: (prev[qId] || 0) + timeSpent
+      }));
+    }
+    questionStartRef.current = Date.now();
+
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrev = () => {
+    // Record time spent on current question
+    const qId = questions[currentQuestionIndex]?.id;
+    if (qId) {
+      const timeSpent = (Date.now() - questionStartRef.current) / 1000;
+      setQuestionTimes(prev => ({
+        ...prev,
+        [qId]: (prev[qId] || 0) + timeSpent
+      }));
+    }
+    questionStartRef.current = Date.now();
+
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
   };
 
   const handleComplete = useCallback(() => {
@@ -395,16 +419,25 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
               {currentQuestion.media?.length > 0 && (
                 <div className="space-y-4">
                   {currentQuestion.media.map((m) => (
-                    <div key={m.id} className="rounded-2xl overflow-hidden bg-[#141F38]">
+                    <div key={m.id} className="rounded-2xl overflow-hidden bg-[#141F38] relative group">
                       {m.media_type === 'image' && (
-                        <img src={m.file} alt="Question Media" className="w-full max-h-[400px] object-contain mx-auto" />
+                        <>
+                          <img src={m.file} alt="Question Media" className="w-full max-h-[300px] object-contain mx-auto cursor-pointer" onClick={() => setLightbox({ url: m.file, type: 'image' })} />
+                          <button onClick={() => setLightbox({ url: m.file, type: 'image' })} className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                            <Maximize2 className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
                       {m.media_type === 'audio' && (
                         <audio controls src={m.file} className="w-full" />
                       )}
-                      {/* Video mockup handling based on structure, assume 'video' exists or use standard HTML5 */}
                       {m.media_type === 'video' && (
-                        <video controls src={m.file} className="w-full max-h-[400px]" />
+                        <>
+                          <video controls src={m.file} className="w-full max-h-[300px]" />
+                          <button onClick={() => setLightbox({ url: m.file, type: 'video' })} className="absolute top-3 right-3 w-9 h-9 rounded-xl bg-black/50 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                            <Maximize2 className="w-4 h-4" />
+                          </button>
+                        </>
                       )}
                     </div>
                   ))}
@@ -416,7 +449,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 {currentQuestion.answers.map((answer, idx) => {
                   const letter = String.fromCharCode(65 + idx); // A, B, C, D
                   const isSelected = answers[currentQuestion.id] === answer.id;
-                  
+
                   return (
                     <button
                       key={answer.id}
@@ -438,6 +471,68 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                     </button>
                   );
                 })}
+              </div>
+
+              {/* Navigation Buttons */}
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  onClick={handlePrev}
+                  disabled={currentQuestionIndex === 0}
+                  className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-[#F2F4F7] text-[#667085] hover:bg-[#E4E7EC] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Oldingi
+                </button>
+
+                {/* Question dots */}
+                <div className="hidden md:flex items-center gap-1.5">
+                  {questions.map((q, i) => (
+                    <button
+                      key={q.id}
+                      onClick={() => {
+                        const qId = questions[currentQuestionIndex]?.id;
+                        if (qId) {
+                          const timeSpent = (Date.now() - questionStartRef.current) / 1000;
+                          setQuestionTimes(prev => ({ ...prev, [qId]: (prev[qId] || 0) + timeSpent }));
+                        }
+                        questionStartRef.current = Date.now();
+                        setCurrentQuestionIndex(i);
+                      }}
+                      className={`w-8 h-8 rounded-full text-[11px] font-black transition-all ${
+                        i === currentQuestionIndex
+                          ? 'bg-primary text-white scale-110'
+                          : answers[q.id] != null
+                            ? 'bg-[#22C55E] text-white'
+                            : 'bg-[#F2F4F7] text-[#98A2B3] hover:bg-[#E4E7EC]'
+                      }`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+
+                {currentQuestionIndex < questions.length - 1 ? (
+                  <button
+                    onClick={handleNext}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-sm bg-primary text-white hover:brightness-110 transition-all shadow-lg shadow-primary/20"
+                  >
+                    Keyingi <ArrowRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleComplete}
+                    disabled={submitAttempt.isPending}
+                    className="flex items-center gap-2 px-5 py-3 rounded-xl font-black text-sm bg-[#22C55E] text-white hover:bg-[#16A34A] transition-all shadow-lg shadow-[#22C55E]/20 disabled:opacity-70"
+                  >
+                    {submitAttempt.isPending ? 'Topshirilmoqda...' : 'Topshirish'} <Send className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              {/* Mobile: answered count */}
+              <div className="md:hidden text-center">
+                <span className="text-xs font-bold text-[#98A2B3]">
+                  {Object.keys(answers).length}/{questions.length} javob berildi
+                </span>
               </div>
             </div>
           </motion.div>
@@ -574,11 +669,15 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                             </div>
                           );
                         })}
-                        {/* Static warning bar mimicking mockup */}
-                        <div className="p-4 bg-[#FFF6ED] border border-[#FDBA74]/30 rounded-2xl flex items-center gap-3 mt-4">
-                           <AlertTriangle className="w-5 h-5 text-surface-tint shrink-0"/>
-                           <p className="text-[12px] font-bold text-[#141F38]">Ba'zi savollarda ustoz belgilagan vaqtdan (15s) oshib ketdingiz.</p>
-                        </div>
+                        {/* Slow questions warning — only show if any question took > 15s */}
+                        {Object.values(questionTimes).some(t => t > 15) && (
+                          <div className="p-4 bg-[#FFF6ED] border border-[#FDBA74]/30 rounded-2xl flex items-center gap-3 mt-4">
+                            <AlertTriangle className="w-5 h-5 text-surface-tint shrink-0"/>
+                            <p className="text-[12px] font-bold text-[#141F38]">
+                              {Object.values(questionTimes).filter(t => t > 15).length} ta savolda 15 sekunddan ko'p vaqt sarfladingiz.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -587,68 +686,82 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
             )}
 
             {/* AI Recommendations Area */}
-            <div className="space-y-4">
-               <div className="flex items-center gap-2 px-2">
+            {insights && insights.length > 0 && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 px-2">
                   <div className="w-8 h-8 rounded-full bg-[#FFF6ED] text-surface-tint flex items-center justify-center">
                     <BarChart3 className="w-4 h-4"/>
                   </div>
                   <h3 className="text-lg font-black text-[#141F38]">AI Tavsiyalar</h3>
-               </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Mocked recommendations to match Image 5 */}
-                  <div className="bg-white p-5 rounded-3xl border border-[#F2F4F7] shadow-sm hover:shadow-md transition-all space-y-3">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#FFF0F0] text-[#F04438] flex items-center justify-center">
-                           <BookOpen className="w-5 h-5"/>
-                        </div>
-                        <h4 className="font-black text-[#141F38] text-[15px]">Present Continuous</h4>
-                     </div>
-                     <p className="text-[#667085] text-[12px] font-semibold leading-relaxed">
-                       Siz Present Continuous mavzusida qiyinchilikka duch kelayapsiz. 2-modul 3-darsni qayta ko'rib chiqishingiz tavsiya qilinadi.
-                     </p>
-                     <button className="text-surface-tint font-black text-[12px] flex items-center gap-1 hover:gap-2 transition-all w-full pt-2">
-                        Darsga o'tish <ArrowRight className="w-3 h-3"/>
-                     </button>
-                  </div>
-                  
-                  <div className="bg-white p-5 rounded-3xl border border-[#F2F4F7] shadow-sm hover:shadow-md transition-all space-y-3">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#FFF6ED] text-surface-tint flex items-center justify-center">
-                           <p className="font-black">A</p>
-                        </div>
-                        <h4 className="font-black text-[#141F38] text-[15px]">Vocabulary - Daily Life</h4>
-                     </div>
-                     <p className="text-[#667085] text-[12px] font-semibold leading-relaxed">
-                       Kundalik hayot so'zlari bo'yicha ba'zi xatolar bor. Qo'shimcha mashq qilish tavsiya etiladi.
-                     </p>
-                     <button className="text-surface-tint font-black text-[12px] flex items-center gap-1 hover:gap-2 transition-all w-full pt-2">
-                        Darsga o'tish <ArrowRight className="w-3 h-3"/>
-                     </button>
-                  </div>
+                </div>
 
-                  <div className="bg-white p-5 rounded-3xl border border-[#F2F4F7] shadow-sm hover:shadow-md transition-all space-y-3">
-                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#E8FFF0] text-[#22C55E] flex items-center justify-center">
-                           <RotateCcw className="w-5 h-5"/>
+                {/* Latest insight text */}
+                <div className="bg-white p-5 md:p-6 rounded-3xl border border-[#F2F4F7] shadow-sm space-y-4">
+                  <p className="text-[13px] font-semibold text-[#667085] leading-relaxed">
+                    {insights[0].insight_text}
+                  </p>
+                </div>
+
+                {/* Weak areas & recommendations */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {insights[0].weak_areas?.map((area, i) => (
+                    <div key={i} className="bg-white p-5 rounded-3xl border border-[#F2F4F7] shadow-sm hover:shadow-md transition-all space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-[#FFF0F0] text-[#F04438] flex items-center justify-center">
+                          <BookOpen className="w-5 h-5"/>
                         </div>
-                        <h4 className="font-black text-[#141F38] text-[15px]">Past Simple</h4>
-                     </div>
-                     <p className="text-[#667085] text-[12px] font-semibold leading-relaxed">
-                       Past Simple mavzusini yaxshi o'zlashtirgansiz! Davom eting!
-                     </p>
-                     <button className="text-surface-tint font-black text-[12px] flex items-center gap-1 hover:gap-2 transition-all w-full pt-2">
-                        Keyingi dars <ArrowRight className="w-3 h-3"/>
-                     </button>
-                  </div>
-               </div>
-            </div>
+                        <h4 className="font-black text-[#141F38] text-[15px]">{area}</h4>
+                      </div>
+                      {insights[0].recommendations?.[i] && (
+                        <p className="text-[#667085] text-[12px] font-semibold leading-relaxed">
+                          {insights[0].recommendations[i]}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             
             <div className="pt-8 pb-12 flex justify-center">
                <button onClick={onClose} className="text-[#98A2B3] font-bold text-sm bg-white border border-[#F2F4F7] px-8 py-3 rounded-xl hover:bg-[#F8F9FA] transition-colors">
                  Orqaga qaytish
                </button>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightbox && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 backdrop-blur-md z-[300] flex items-center justify-center p-4"
+            onClick={() => setLightbox(null)}
+          >
+            <button
+              onClick={() => setLightbox(null)}
+              className="absolute top-4 right-4 w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center hover:bg-white/20 transition-colors z-10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              className="max-w-[90vw] max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {lightbox.type === 'image' && (
+                <img src={lightbox.url} alt="Media" className="max-w-full max-h-[90vh] object-contain rounded-2xl" />
+              )}
+              {lightbox.type === 'video' && (
+                <video controls autoPlay src={lightbox.url} className="max-w-full max-h-[90vh] rounded-2xl" />
+              )}
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

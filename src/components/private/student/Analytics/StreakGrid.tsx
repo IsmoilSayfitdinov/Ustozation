@@ -23,9 +23,10 @@ const StreakGrid = () => {
       const date = new Date(now);
       date.setDate(date.getDate() - (29 - i));
       const dateStr = date.toISOString().slice(0, 10);
-      const day = i + 1;
+      const dayOfMonth = date.getDate();
       const isActive = activeDays.has(dateStr);
-      const isFuture = date > now;
+      const isToday = dateStr === now.toISOString().slice(0, 10);
+      const isFuture = date > now && !isToday;
 
       let status: 'active' | 'missed' | 'upcoming';
       if (isFuture) {
@@ -36,7 +37,7 @@ const StreakGrid = () => {
         status = 'missed';
       }
 
-      return { day, status };
+      return { day: dayOfMonth, status, isToday };
     });
   }, [pointsData]);
 
@@ -58,13 +59,13 @@ const StreakGrid = () => {
             {days.map((item, index) => (
               <div
                 key={index}
-                className={`aspect-square rounded-lg border flex items-center justify-center text-[10px] font-bold transition-all ${
+                className={`aspect-square rounded-lg border flex items-center justify-center text-[10px] font-bold transition-all relative ${
                   item.status === 'active'
                     ? 'bg-surface-tint border-surface-tint text-white shadow-lg shadow-surface-tint/20'
                     : item.status === 'missed'
                     ? 'bg-[#FEE4E2] border-[#FEE4E2] text-[#F04438]'
                     : 'bg-[#F9FAFB] border-[#F2F4F7] text-[#98A2B3]'
-                }`}
+                } ${item.isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
               >
                 {item.day}
               </div>

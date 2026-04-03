@@ -7,7 +7,6 @@ const StreakGraph = () => {
   const { data: pointsData } = usePoints();
 
   const days = useMemo(() => {
-    const currentStreak = streak?.current_streak ?? 0;
     const now = new Date();
 
     const dayActivity: Record<string, number> = {};
@@ -24,17 +23,21 @@ const StreakGraph = () => {
       const date = new Date(now);
       date.setDate(date.getDate() - (29 - i));
       const dateStr = date.toISOString().slice(0, 10);
-      const dayIndex = 29 - i;
       const activity = dayActivity[dateStr] || 0;
+      const isToday = dateStr === now.toISOString().slice(0, 10);
 
       let status: 'twice' | 'once' | 'light' | 'none';
-      if (dayIndex < currentStreak) {
-        status = activity >= 3 ? 'twice' : activity >= 1 ? 'once' : 'light';
+      if (activity >= 3) {
+        status = 'twice';
+      } else if (activity >= 2) {
+        status = 'once';
+      } else if (activity >= 1) {
+        status = 'light';
       } else {
-        status = activity > 0 ? 'light' : 'none';
+        status = 'none';
       }
 
-      return { id: i, status };
+      return { id: i, status, day: date.getDate(), isToday };
     });
   }, [streak, pointsData]);
 
@@ -61,16 +64,19 @@ const StreakGraph = () => {
       ) : (
         <>
           <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 gap-1.5 md:gap-2">
-            {days.map((day) => (
+            {days.map((d) => (
               <div
-                key={day.id}
-                className={`aspect-square rounded-[8px] md:rounded-[12px] transition-all duration-300 hover:scale-105 ${
-                  day.status === 'twice' ? 'bg-[#6D2D03]'
-                    : day.status === 'once' ? 'bg-[#F97316]'
-                    : day.status === 'light' ? 'bg-[#FFB782]'
-                    : 'bg-[#F2F4F7]'
-                }`}
-              />
+                key={d.id}
+                title={`${d.day}-kun`}
+                className={`aspect-square rounded-[8px] md:rounded-[12px] transition-all duration-300 hover:scale-110 flex items-center justify-center text-[8px] md:text-[9px] font-bold ${
+                  d.status === 'twice' ? 'bg-[#6D2D03] text-white/70'
+                    : d.status === 'once' ? 'bg-[#F97316] text-white/70'
+                    : d.status === 'light' ? 'bg-[#FFB782] text-white/70'
+                    : 'bg-[#F2F4F7] text-[#D0D5DD]'
+                } ${d.isToday ? 'ring-2 ring-primary ring-offset-1' : ''}`}
+              >
+                {d.day}
+              </div>
             ))}
           </div>
 

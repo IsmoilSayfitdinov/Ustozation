@@ -29,6 +29,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
   const { data: students, isLoading } = useCourseStudents(group?.id ?? 0);
   const { data: courseLessons } = useCourseLessons(group?.id ?? 0);
   const toggleLessonMutation = useToggleLesson();
+  const canEdit = !!onUpdate; // teacher: true, admin: false
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editMaxStudents, setEditMaxStudents] = useState('');
@@ -84,7 +85,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
               >
                 <X className="w-5 h-5" />
               </button>
-              {isEditing ? (
+              {canEdit && isEditing ? (
                 <input
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
@@ -99,24 +100,35 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                 <span className="bg-white/20 text-white px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">
                   {group.level.name}
                 </span>
-                <button
-                  onClick={handleToggleActive}
-                  disabled={isUpdating}
-                  className={cn(
-                    "px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm cursor-pointer transition-colors",
-                    group.is_active ? "bg-white/20 text-white hover:bg-red-500/30" : "bg-red-500/30 text-white hover:bg-white/20"
-                  )}
-                >
-                  {group.is_active ? 'Aktiv' : 'Nofaol'}
-                </button>
-                {!isEditing ? (
-                  <button onClick={() => setIsEditing(true)} className="bg-white/20 text-white p-1.5 rounded-lg hover:bg-white/30 transition-colors">
-                    <Pencil className="w-3.5 h-3.5" />
+                {canEdit ? (
+                  <button
+                    onClick={handleToggleActive}
+                    disabled={isUpdating}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm cursor-pointer transition-colors",
+                      group.is_active ? "bg-white/20 text-white hover:bg-red-500/30" : "bg-red-500/30 text-white hover:bg-white/20"
+                    )}
+                  >
+                    {group.is_active ? 'Aktiv' : 'Nofaol'}
                   </button>
                 ) : (
-                  <button onClick={handleSave} disabled={isUpdating} className="bg-white/30 text-white p-1.5 rounded-lg hover:bg-white/40 transition-colors">
-                    <Save className="w-3.5 h-3.5" />
-                  </button>
+                  <span className={cn(
+                    "px-2.5 py-1 rounded-lg text-xs font-bold backdrop-blur-sm",
+                    group.is_active ? "bg-white/20 text-white" : "bg-red-500/30 text-white"
+                  )}>
+                    {group.is_active ? 'Aktiv' : 'Nofaol'}
+                  </span>
+                )}
+                {canEdit && (
+                  !isEditing ? (
+                    <button onClick={() => setIsEditing(true)} className="bg-white/20 text-white p-1.5 rounded-lg hover:bg-white/30 transition-colors">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  ) : (
+                    <button onClick={handleSave} disabled={isUpdating} className="bg-white/30 text-white p-1.5 rounded-lg hover:bg-white/40 transition-colors">
+                      <Save className="w-3.5 h-3.5" />
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -136,7 +148,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                     <Users className="w-4 h-4" />
                     <span className="text-xs font-bold uppercase tracking-wider">O'quvchilar</span>
                   </div>
-                  {isEditing ? (
+                  {canEdit && isEditing ? (
                     <input
                       type="number"
                       value={editMaxStudents}
@@ -163,7 +175,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <BookOpen className="w-5 h-5 text-[#F97316]" />
-                    <h3 className="text-lg font-bold text-[#141F38]">Darslar boshqaruvi</h3>
+                    <h3 className="text-lg font-bold text-[#141F38]">{canEdit ? 'Darslar boshqaruvi' : 'Darslar'}</h3>
                   </div>
                   <div className="space-y-2">
                     {courseLessons.map((cl) => (
@@ -172,16 +184,25 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
                           <p className="text-sm font-bold text-[#1C2434] truncate">{cl.lesson.title}</p>
                           <p className="text-[11px] text-[#98A2B3] font-medium">{cl.module_title}</p>
                         </div>
-                        <button
-                          onClick={() => toggleLessonMutation.mutate({ courseId: group.id, lessonId: cl.lesson.id, unlock: !cl.is_unlocked })}
-                          disabled={toggleLessonMutation.isPending}
-                          className={cn(
-                            "px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0",
-                            cl.is_unlocked ? "bg-[#E8FFF0] text-[#22C55E] hover:bg-[#22C55E] hover:text-white" : "bg-[#F2F4F7] text-[#98A2B3] hover:bg-primary hover:text-white"
-                          )}
-                        >
-                          {cl.is_unlocked ? 'Ochiq' : 'Yopiq'}
-                        </button>
+                        {canEdit ? (
+                          <button
+                            onClick={() => toggleLessonMutation.mutate({ courseId: group.id, lessonId: cl.lesson.id, unlock: !cl.is_unlocked })}
+                            disabled={toggleLessonMutation.isPending}
+                            className={cn(
+                              "px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0",
+                              cl.is_unlocked ? "bg-[#E8FFF0] text-[#22C55E] hover:bg-[#22C55E] hover:text-white" : "bg-[#F2F4F7] text-[#98A2B3] hover:bg-primary hover:text-white"
+                            )}
+                          >
+                            {cl.is_unlocked ? 'Ochiq' : 'Yopiq'}
+                          </button>
+                        ) : (
+                          <span className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-bold shrink-0",
+                            cl.is_unlocked ? "bg-[#E8FFF0] text-[#22C55E]" : "bg-[#F2F4F7] text-[#98A2B3]"
+                          )}>
+                            {cl.is_unlocked ? 'Ochiq' : 'Yopiq'}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>

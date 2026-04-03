@@ -157,7 +157,8 @@ const Profile = () => {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-5
+      ">
         <h1 className="text-3xl md:text-4xl font-black text-[#141F38] tracking-tight">Profil</h1>
       </div>
 
