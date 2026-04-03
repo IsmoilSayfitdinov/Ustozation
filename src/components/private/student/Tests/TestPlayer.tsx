@@ -14,7 +14,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
   const [state, setState] = useState<'start' | 'playing' | 'results'>('start');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, number | null>>({});
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [timeSpent, setTimeSpent] = useState(0);
   const [attemptId, setAttemptId] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
 
@@ -35,33 +35,55 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
   // ===== Anti-cheat: tab switch detection =====
   const [tabWarnings, setTabWarnings] = useState(0);
   const [showTabWarning, setShowTabWarning] = useState(false);
+  const [awayStartTime, setAwayStartTime] = useState<number | null>(null);
+  const awayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const MAX_TAB_WARNINGS = 3;
+  const MAX_AWAY_SECONDS = 600; // 10 daqiqa
 
   useEffect(() => {
     if (state !== 'playing') return;
 
     const handleVisibility = () => {
       if (document.hidden) {
+        // Ekrandan chiqdi
+        setAwayStartTime(Date.now());
         setTabWarnings(prev => {
           const next = prev + 1;
           setShowTabWarning(true);
           return next;
         });
+
+        // 10 daqiqadan keyin auto-finish
+        awayTimerRef.current = setTimeout(() => {
+          if (attemptId) {
+            handleAutoFinish();
+          }
+        }, MAX_AWAY_SECONDS * 1000);
+      } else {
+        // Qaytib keldi — timer ni to'xtatish
+        if (awayTimerRef.current) {
+          clearTimeout(awayTimerRef.current);
+          awayTimerRef.current = null;
+        }
+        setAwayStartTime(null);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
-    return () => document.removeEventListener('visibilitychange', handleVisibility);
-  }, [state]);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (awayTimerRef.current) clearTimeout(awayTimerRef.current);
+    };
+  }, [state, attemptId]);
 
   // Auto-submit when max warnings reached
   useEffect(() => {
     if (tabWarnings >= MAX_TAB_WARNINGS && state === 'playing' && attemptId) {
-      handleComplete();
+      handleAutoFinish();
     }
   }, [tabWarnings]);
 
-  // ===== Anti-cheat: prevent page leave =====
+  // ===== Anti-cheat: prevent page leave + browser back =====
   useEffect(() => {
     if (state !== 'playing') return;
 
@@ -71,8 +93,23 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
       return e.returnValue;
     };
 
+    // Block browser back button
+    const handlePopState = () => {
+      window.history.pushState(null, '', window.location.href);
+      setTabWarnings(prev => {
+        const next = prev + 1;
+        setShowTabWarning(true);
+        return next;
+      });
+    };
+
+    window.history.pushState(null, '', window.location.href);
     window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [state]);
 
   // ===== Anti-cheat: block screenshot keys & right click =====
@@ -123,18 +160,16 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
     };
   }, [state]);
 
-  // Timer
+  // Timer — oldinga sanaydi (0 dan boshlab)
   useEffect(() => {
     let timer: ReturnType<typeof setInterval>;
-    if (state === 'playing' && timeLeft > 0) {
+    if (state === 'playing') {
       timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
+        setTimeSpent((prev) => prev + 1);
       }, 1000);
-    } else if (state === 'playing' && timeLeft === 0 && questions.length > 0) {
-      handleComplete();
     }
     return () => clearInterval(timer);
-  }, [state, timeLeft]);
+  }, [state]);
 
   // Track time start for active question
   useEffect(() => {
@@ -147,7 +182,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
     startAttempt.mutate(quizId, {
       onSuccess: (data) => {
         setAttemptId(data.attempt_id);
-        setTimeLeft(data.time_limit ?? quiz?.time_limit ?? 900);
+        setTimeSpent(0);
         setCurrentQuestionIndex(0);
         setAnswers({});
         setQuestionTimes({});
@@ -194,6 +229,20 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
       setCurrentQuestionIndex(prev => prev - 1);
     }
   };
+
+  // Auto-finish — 0 bal bilan (ogohlantirish limitiga yetganda yoki 10 daqiqa away)
+  const handleAutoFinish = useCallback(() => {
+    if (!attemptId) return;
+    // Hamma javoblarni null qilib yuborish — 0 bal
+    const emptyAnswers: SubmitAnswerPayload[] = questions.map(q => ({
+      question_id: q.id,
+      answer_id: null,
+    }));
+    submitAttempt.mutate(
+      { attemptId, answers: emptyAnswers },
+      { onSuccess: () => setState('results') }
+    );
+  }, [attemptId, questions]);
 
   const handleComplete = useCallback(() => {
     if (!attemptId) return;
@@ -276,7 +325,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
             <div className="space-y-3">
               <h2 className="text-2xl md:text-3xl font-black text-[#141F38] dark:text-white">{quiz?.title ?? 'Testni boshlash'}</h2>
               <p className="text-[#667085] font-black text-sm">
-                {questions.length} ta savol · {Math.floor((quiz?.time_limit ?? 900) / 60)} daqiqa
+                {questions.length} ta savol · Vaqt chegarasiz
               </p>
               {quiz?.description && (
                 <p className="text-[#667085] text-sm font-semibold mx-auto p-4 bg-[#F8F9FA] dark:bg-white/5 rounded-xl">{quiz.description}</p>
@@ -293,9 +342,11 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 {[
                   "Test davomida boshqa sahifaga o'tish taqiqlanadi",
                   "Tab almashtirsangiz — ogohlantirish beriladi (3 ta imkoniyat)",
-                  "3 marta ogohlantirish — test avtomatik topshiriladi",
+                  "3 marta ogohlantirish — test 0 ball bilan avtomatik topshiriladi",
+                  "Ekrandan chiqib 10 daqiqa qaytmasangiz — test 0 ball bilan yakunlanadi",
+                  "Orqaga tugma bloklangan — test vaqtida chiqib bo'lmaydi",
                   "Screenshot, print va nusxa olish bloklangan",
-                  "Vaqt tugasa — test avtomatik topshiriladi",
+                  "Vaqt oldinga sanaladi — tezroq ishlagan yaxshi natija oladi",
                 ].map((rule, i) => (
                   <li key={i} className="flex items-start gap-2.5">
                     <div className="w-5 h-5 rounded-full bg-[#F97316]/15 flex items-center justify-center shrink-0 mt-0.5">
@@ -360,11 +411,16 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                         <div key={i} className={`w-3 h-3 rounded-full transition-colors ${i < tabWarnings ? 'bg-[#F04438]' : 'bg-[#F2F4F7]'}`} />
                       ))}
                     </div>
-                    <p className="text-xs font-bold text-[#F04438]">
-                      {tabWarnings >= MAX_TAB_WARNINGS
-                        ? "Limitga yetildi — test avtomatik topshirildi!"
-                        : `${MAX_TAB_WARNINGS - tabWarnings} ta imkoniyat qoldi. Keyin test avtomatik topshiriladi.`}
-                    </p>
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-[#F04438]">
+                        {tabWarnings >= MAX_TAB_WARNINGS
+                          ? "Limitga yetildi — test 0 ball bilan avtomatik topshirildi!"
+                          : `${MAX_TAB_WARNINGS - tabWarnings} ta imkoniyat qoldi. Keyin test 0 ball bilan topshiriladi.`}
+                      </p>
+                      <p className="text-[11px] font-medium text-[#98A2B3]">
+                        Ekrandan chiqsangiz 10 daqiqa ichida qaytmasangiz — test avtomatik 0 ball bilan yakunlanadi.
+                      </p>
+                    </div>
                     {tabWarnings < MAX_TAB_WARNINGS && (
                       <button
                         onClick={() => setShowTabWarning(false)}
@@ -393,7 +449,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 <div className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-1.5 rounded-lg border border-[#EAECF0]">
                   <Timer className="w-4 h-4 text-[#98A2B3]" />
                   <span className="text-[13px] font-black text-[#141F38]">
-                    {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
+                    {Math.floor(timeSpent / 60)}:{String(timeSpent % 60).padStart(2, '0')}
                   </span>
                 </div>
               </div>
@@ -555,8 +611,13 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                  {result?.is_passed ? "Tabriklaymiz! Siz o'tdingiz!" : "Afsuski, yetarli ball to'play olmadingiz."}
               </p>
               
-              <div className="inline-block bg-[#FFF6ED] text-surface-tint px-4 py-1.5 rounded-full text-xs font-black mb-8 border border-surface-tint/20">
-                Ball: {result?.adjusted_score ?? 0}/{result?.max_possible_score ?? 0}
+              <div className="flex items-center justify-center gap-3 mb-8">
+                <div className="bg-[#FFF6ED] text-surface-tint px-4 py-1.5 rounded-full text-xs font-black border border-surface-tint/20">
+                  Ball: {result?.adjusted_score ?? 0}/{result?.max_possible_score ?? 0}
+                </div>
+                <div className="bg-[#F2F4F7] text-[#667085] px-4 py-1.5 rounded-full text-xs font-black">
+                  Vaqt: {Math.floor(timeSpent / 60)}:{String(timeSpent % 60).padStart(2, '0')}
+                </div>
               </div>
 
               {/* Circle Graph */}
@@ -604,6 +665,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                     setAnswers({});
                     setCurrentQuestionIndex(0);
                     setTabWarnings(0);
+                    setTimeSpent(0);
                     setQuestionTimes({});
                   }}
                   className="flex-1 bg-[#F2F4F7] hover:bg-[#E4E7EC] text-[#141F38] py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-[0.98]"

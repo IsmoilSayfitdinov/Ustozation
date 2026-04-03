@@ -27,8 +27,8 @@ export const quizzesApi = {
     client.post<ApiResponse<QuizType>>("/quizzes/types/", data),
 
   // Template quizzes (level bo'yicha)
-  getTemplateQuizzes: (levelId: number) =>
-    client.get<PaginatedResponse<QuizListItem>>(`/quizzes/templates/`, { params: { level_id: levelId } }),
+  getTemplateQuizzes: (levelId?: number) =>
+    client.get<PaginatedResponse<QuizListItem>>(`/quizzes/templates/`, { params: levelId ? { level_id: levelId } : undefined }),
 
   // Quiz detail
   getQuiz: (id: number) =>

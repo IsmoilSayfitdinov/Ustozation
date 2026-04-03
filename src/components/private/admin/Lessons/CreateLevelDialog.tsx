@@ -22,7 +22,8 @@ const CreateLevelDialog: React.FC<CreateLevelDialogProps> = ({ isOpen, onClose, 
   if (!isOpen) return null;
 
   const onFormSubmit = (data: CreateLevelSchema) => {
-    onSubmit({ ...data, description: data.description || '', order: currentCount + 1 });
+    const autoSlug = data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    onSubmit({ ...data, slug: autoSlug, description: data.description || '', order: currentCount + 1 });
   };
 
   const handleClose = () => {
@@ -52,21 +53,14 @@ const CreateLevelDialog: React.FC<CreateLevelDialogProps> = ({ isOpen, onClose, 
                 {...register('name')}
                 type="text"
                 placeholder="Masalan: Beginner, Elementary..."
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setValue('name', val);
+                  setValue('slug', val.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+                }}
                 className={`w-full px-4 py-3 bg-white border rounded-xl outline-none focus:ring-2 focus:ring-[#F97316]/20 transition-all font-medium text-[#1C2434] text-sm ${errors.name ? 'border-red-400' : 'border-[#E4E7EC]'}`}
               />
               {errors.name && <p className="text-red-500 text-[11px] font-bold ml-1">{errors.name.message}</p>}
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#667085] ml-1">Slug (URL uchun) *</label>
-              <input
-                {...register('slug')}
-                type="text"
-                placeholder="Masalan: beginner, elementary..."
-                onChange={(e) => setValue('slug', e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
-                className={`w-full px-4 py-3 bg-white border rounded-xl outline-none focus:ring-2 focus:ring-[#F97316]/20 transition-all font-medium text-[#1C2434] text-sm ${errors.slug ? 'border-red-400' : 'border-[#E4E7EC]'}`}
-              />
-              {errors.slug && <p className="text-red-500 text-[11px] font-bold ml-1">{errors.slug.message}</p>}
             </div>
 
             <div className="space-y-1.5">

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { quizzesApi } from "@/api/quizzes";
-import type { QuizCreatePayload, QuizEditPayload, QuestionCreatePayload, AnswerPayload, SubmitAnswerPayload } from "@/types/api";
+import type { QuizCreatePayload, QuizEditPayload, QuestionCreatePayload, QuestionEditPayload, AnswerPayload, SubmitAnswerPayload } from "@/types/api";
 import { getErrorMessage } from "@/lib/getErrorMessage";
 
 export function useQuizTypes() {
@@ -11,26 +11,26 @@ export function useQuizTypes() {
       const { data } = await quizzesApi.getQuizTypes();
       return data.results;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
-export function useTemplateQuizzes(levelId: number) {
+export function useTemplateQuizzes(levelId?: number) {
   return useQuery({
-    queryKey: ["template-quizzes", levelId],
+    queryKey: ["template-quizzes", levelId ?? "all"],
     queryFn: async () => {
       const { data } = await quizzesApi.getTemplateQuizzes(levelId);
       return data.results;
     },
-    enabled: !!levelId,
   });
 }
 
 export function useCreateQuizType() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { name: string; slug: string; description?: string }) => {
-      const res = await quizzesApi.createQuizType(data);
+    mutationFn: async (data: { name: string; slug?: string; description?: string }) => {
+      const payload = { ...data, slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') };
+      const res = await quizzesApi.createQuizType(payload);
       return res.data;
     },
     onSuccess: () => {
@@ -143,7 +143,7 @@ export function useCreateQuestion() {
 export function useUpdateQuestion() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ questionId, data }: { questionId: number; data: { text?: string; order?: number } }) => {
+    mutationFn: async ({ questionId, data }: { questionId: number; data: QuestionEditPayload }) => {
       const res = await quizzesApi.updateQuestion(questionId, data);
       return res.data;
     },

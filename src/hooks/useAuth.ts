@@ -47,7 +47,7 @@ export function useTeachers() {
       const { data } = await authApi.getTeachers();
       return data.results;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -116,20 +116,25 @@ export function useMe() {
       return data;
     },
     enabled: isAuthenticated,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 }
 
 export function useUpdateProfile() {
   const queryClient = useQueryClient();
+  const { setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: async (data: ProfileUpdatePayload) => {
       const res = await authApi.updateMe(data);
       return res.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["me"] });
+    onSuccess: async () => {
+      // Yangi user datani olish va zustand ga saqlash
+      const { data: freshUser } = await authApi.getMe();
+      setUser(freshUser);
+      queryClient.setQueryData(["me"], freshUser);
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       toast.success("Profil yangilandi!");
     },

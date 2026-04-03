@@ -12,8 +12,10 @@ import type {
 
 export const analyticsApi = {
   // Student
-  getDashboard: () =>
-    client.get<ApiResponse<StudentDashboard>>("/analytics/dashboard/"),
+  getDashboard: (studentId?: number) =>
+    client.get<ApiResponse<StudentDashboard>>("/analytics/dashboard/", {
+      params: studentId ? { student_id: studentId } : undefined,
+    }),
 
   getInsights: () =>
     client.get<PaginatedResponse<AIInsight>>("/analytics/insights/"),

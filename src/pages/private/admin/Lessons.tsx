@@ -63,7 +63,7 @@ const LevelCard = ({ levelId, onDeleteLevel, onUpdateLevel }: { levelId: number;
 
   const handleCreateModule = (data: { name: string; description: string }) => {
     createModuleMutation.mutate(
-      { levelId: level.id, data: { title: data.name, description: data.description || '', order: level.modules.length + 1, slug: data.name } },
+      { levelId: level.id, data: { title: data.name, description: data.description || '', order: level.modules.length + 1 } },
       { onSuccess: () => setModuleDialogOpen(false) }
     );
   };
@@ -349,10 +349,14 @@ const AdminLessons = () => {
     });
   };
 
+  const firstLevelId = levels?.[0]?.id ?? 0;
+  const { data: statsLevel } = useLevelDetail(firstLevelId);
+  const totalModules = statsLevel?.modules?.length ?? 0;
+  const totalLessons = statsLevel?.modules?.reduce((sum: number, m: { lessons: unknown[] }) => sum + m.lessons.length, 0) ?? 0;
   const dynamicStats = [
     { label: 'Levellar', value: (levels?.length ?? 0).toString(), icon: <Target className="w-5 h-5 text-orange-500" />, bg: 'bg-orange-50' },
-    { label: 'Modullar', value: '—', icon: <Package className="w-5 h-5 text-blue-500" />, bg: 'bg-blue-50' },
-    { label: 'Darslar', value: '—', icon: <BookOpen className="w-5 h-5 text-emerald-500" />, bg: 'bg-emerald-50' },
+    { label: 'Modullar', value: totalModules.toString(), icon: <Package className="w-5 h-5 text-blue-500" />, bg: 'bg-blue-50' },
+    { label: 'Darslar', value: totalLessons.toString(), icon: <BookOpen className="w-5 h-5 text-emerald-500" />, bg: 'bg-emerald-50' },
   ];
 
   return (

@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { analyticsApi } from "@/api/analytics";
 
-export function useDashboard() {
+export function useDashboard(studentId?: number) {
   return useQuery({
-    queryKey: ["dashboard"],
+    queryKey: ["dashboard", studentId],
     queryFn: async () => {
-      const { data } = await analyticsApi.getDashboard();
+      const { data } = await analyticsApi.getDashboard(studentId);
       return data.data;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -19,7 +19,7 @@ export function useInsights() {
       const { data } = await analyticsApi.getInsights();
       return data.results;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
 

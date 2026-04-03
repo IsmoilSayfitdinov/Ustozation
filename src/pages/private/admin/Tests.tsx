@@ -11,7 +11,7 @@ import { customAlert } from '@/components/ui/CustomAlert';
 import { useAuthStore } from '@/store/useAuthStore';
 import { toast } from 'sonner';
 
-type Tab = 'template' | 'course';
+type Tab = 'all' | 'template' | 'course';
 type Step = 'list' | 'quiz-detail';
 
 const Tests = () => {
@@ -20,7 +20,7 @@ const Tests = () => {
   const isTeacher = user?.role === 'teacher';
 
   // Tab & Navigation — admin shablon, teacher guruh
-  const [activeTab, setActiveTab] = useState<Tab>(isAdmin ? 'template' : 'course');
+  const [activeTab, setActiveTab] = useState<Tab>(isAdmin ? 'all' : 'course');
   const [step, setStep] = useState<Step>('list');
   const [selectedLevelId, setSelectedLevelId] = useState('');
   const [selectedQuizId, setSelectedQuizId] = useState('');
@@ -35,6 +35,8 @@ const Tests = () => {
   // Question form
   const [showAddQuestion, setShowAddQuestion] = useState(false);
   const [questionText, setQuestionText] = useState('');
+  const [questionPoints, setQuestionPoints] = useState(20);
+  const [questionPenalty, setQuestionPenalty] = useState(0);
   const [correctOption, setCorrectOption] = useState(0);
   const [answers, setAnswers] = useState(['', '', '', '']);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -42,10 +44,18 @@ const Tests = () => {
   // Data
   const { data: levels } = useLevels();
   const { data: levelDetail } = useLevelDetail(Number(selectedLevelId) || 0);
-  const { data: templateQuizzes } = useTemplateQuizzes(Number(selectedLevelId) || 0);
+  const { data: allTemplateQuizzes } = useTemplateQuizzes();
+  const { data: filteredTemplateQuizzes } = useTemplateQuizzes(Number(selectedLevelId) || undefined);
+  const templateQuizzes = selectedLevelId ? filteredTemplateQuizzes : allTemplateQuizzes;
   const { data: quizTypes } = useQuizTypes();
   const { data: courses } = useCourses();
   const { data: courseQuizzes, isLoading: courseQuizzesLoading } = useCourseQuizzes(Number(selectedCourseId) || 0);
+  const selectedCourse = (courses ?? []).find(c => String(c.id) === selectedCourseId);
+  const courseLevelId = selectedCourse?.level?.id ?? 0;
+  const { data: courseLevelDetail } = useLevelDetail(courseLevelId);
+  const courseLessonOptions = (courseLevelDetail?.modules ?? []).flatMap(m =>
+    m.lessons.map(l => ({ label: `${m.title} → ${l.title}`, value: String(l.id) }))
+  );
   const activeQuizId = selectedQuizId || selectedCourseQuizId;
   const { data: quizDetail, isLoading: quizLoading } = useQuizDetail(Number(activeQuizId) || 0);
 
@@ -62,7 +72,6 @@ const Tests = () => {
   const updateAnswersMutation = useUpdateAnswers();
   const [showCreateType, setShowCreateType] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeSlug, setNewTypeSlug] = useState('');
 
   // Options
   const levelOptions = (levels ?? []).map(l => ({ label: l.name, value: String(l.id) }));
@@ -105,7 +114,7 @@ const Tests = () => {
     if (!answerPayloads.some(a => a.is_correct)) { toast.error("Kamida 1 ta to'g'ri javob kerak"); return; }
 
     createQuestionMutation.mutate(
-      { quizId: Number(activeQuizId), data: { text: questionText, order: questions.length + 1, answers: answerPayloads } },
+      { quizId: Number(activeQuizId), data: { text: questionText, order: questions.length + 1, points: questionPoints, penalty: questionPenalty, answers: answerPayloads } },
       {
         onSuccess: (data) => {
           if (mediaFile && data?.data?.id) {
@@ -114,7 +123,7 @@ const Tests = () => {
             fd.append('media_type', mediaFile.type.startsWith('image') ? 'image' : mediaFile.type.startsWith('audio') ? 'audio' : 'video');
             uploadMediaMutation.mutate({ questionId: data.data.id, formData: fd });
           }
-          setShowAddQuestion(false); setQuestionText(''); setAnswers(['', '', '', '']); setCorrectOption(0); setMediaFile(null);
+          setShowAddQuestion(false); setQuestionText(''); setQuestionPoints(20); setQuestionPenalty(0); setAnswers(['', '', '', '']); setCorrectOption(0); setMediaFile(null);
         },
       }
     );
@@ -125,7 +134,7 @@ const Tests = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         {step === 'quiz-detail' && (
-          <button onClick={() => { setStep('list'); setSelectedQuizId(''); }} className="p-2 rounded-xl hover:bg-[#F2F4F7] text-[#98A2B3] hover:text-[#141F38] transition-colors">
+          <button onClick={() => { setStep('list'); setSelectedQuizId(''); setSelectedCourseQuizId(''); setShowAddQuestion(false); }} className="p-2 rounded-xl hover:bg-[#F2F4F7] text-[#98A2B3] hover:text-[#141F38] transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
@@ -137,180 +146,251 @@ const Tests = () => {
       {/* ========== LIST VIEW ========== */}
       {step === 'list' && (
         <div className="space-y-8">
-          {/* Tabs — admin: shablon | teacher: guruh testlari */}
+          {/* Tabs */}
           <div className="flex gap-2 bg-white p-1.5 rounded-2xl border border-[#F2F4F7] shadow-sm w-fit">
             {isAdmin && (
-              <button onClick={() => setActiveTab('template')} className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black tracking-tight transition-all duration-300 ${activeTab === 'template' ? 'bg-gradient-to-r from-primary to-[#EA580C] text-white shadow-lg shadow-primary/20' : 'text-[#98A2B3] hover:text-[#667085]'}`}>
+              <button onClick={() => setActiveTab('all')} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black tracking-tight transition-all duration-300 ${activeTab === 'all' ? 'bg-gradient-to-r from-[#22C55E] to-[#16A34A] text-white shadow-lg shadow-green-500/20' : 'text-[#98A2B3] hover:text-[#667085]'}`}>
+                <CheckCircle className="w-4 h-4" /> Barcha testlar
+              </button>
+            )}
+            {isAdmin && (
+              <button onClick={() => setActiveTab('template')} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black tracking-tight transition-all duration-300 ${activeTab === 'template' ? 'bg-gradient-to-r from-primary to-[#EA580C] text-white shadow-lg shadow-primary/20' : 'text-[#98A2B3] hover:text-[#667085]'}`}>
                 <BookOpen className="w-4 h-4" /> Shablon testlar
               </button>
             )}
-            {(isTeacher || isAdmin) && (
-              <button onClick={() => setActiveTab('course')} className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-black tracking-tight transition-all duration-300 ${activeTab === 'course' ? 'bg-gradient-to-r from-[#141F38] to-[#1E3A5F] text-white shadow-lg shadow-[#141F38]/20' : 'text-[#98A2B3] hover:text-[#667085]'}`}>
+            {isTeacher && (
+              <button onClick={() => setActiveTab('course')} className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black tracking-tight transition-all duration-300 ${activeTab === 'course' ? 'bg-gradient-to-r from-[#141F38] to-[#1E3A5F] text-white shadow-lg shadow-[#141F38]/20' : 'text-[#98A2B3] hover:text-[#667085]'}`}>
                 <Layers className="w-4 h-4" /> Guruh testlari
               </button>
             )}
           </div>
 
-          {/* ===== TEMPLATE TAB ===== */}
-          {activeTab === 'template' && (
-          <>
-          {/* Step 1: Level */}
-          <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-5">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-[#EA580C] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-primary/20">1</div>
-              <div>
-                <h3 className="text-lg font-black text-[#1D2939]">Daraja tanlang</h3>
-                <p className="text-xs font-medium text-[#98A2B3]">Level → Module → Lesson ierarxiyasini ko'ring</p>
-              </div>
-            </div>
-            <div className="max-w-md">
-              <CustomSelect options={levelOptions} value={selectedLevelId} onChange={(val) => { setSelectedLevelId(val); setSelectedQuizId(''); }} placeholder="Darajani tanlang..." />
-            </div>
-          </div>
-
-          {/* Step 2: Modules + Lessons */}
-          {selectedLevelId && levelDetail && (
-            <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-6">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#3B82F6] to-[#2563EB] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-blue-500/20">2</div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-black text-[#1D2939]">{levelDetail.name} — Modullar va darslar</h3>
-                  <p className="text-xs font-medium text-[#98A2B3]">{levelDetail.modules.length} ta modul, {levelDetail.modules.reduce((s, m) => s + m.lessons.length, 0)} ta dars</p>
+          {/* ===== ALL TESTS TAB ===== */}
+          {activeTab === 'all' && isAdmin && (
+            <div className="space-y-6">
+              {/* Shablon testlar */}
+              <div className="bg-white p-6 md:p-8 rounded-[24px] border border-[#F2F4F7] shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-black text-[#1D2939] flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    Shablon testlar ({allTemplateQuizzes?.length ?? 0})
+                  </h3>
+                  <span className="text-[10px] font-bold text-[#98A2B3] bg-[#FFF7ED] text-primary px-2.5 py-1 rounded-full">Guruh yaratilganda klonlanadi</span>
                 </div>
-              </div>
-
-              {levelDetail.modules.length === 0 ? (
-                <div className="text-center py-12 bg-[#F9FAFB] rounded-2xl border border-dashed border-[#E4E7EC]">
-                  <BookOpen className="w-10 h-10 text-[#D0D5DD] mx-auto mb-3" />
-                  <p className="text-[#98A2B3] font-bold">Bu darajada modullar yo'q</p>
-                  <p className="text-[#D0D5DD] text-xs mt-1">"O'quv dasturi" sahifasida yarating</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {levelDetail.modules.map((mod, modIdx) => (
-                    <div key={mod.id} className="rounded-2xl border border-[#F2F4F7] overflow-hidden hover:shadow-md transition-shadow">
-                      <div className="px-5 py-4 bg-gradient-to-r from-[#F8F9FA] to-white border-b border-[#F2F4F7] flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 font-black text-xs">{modIdx + 1}</div>
-                        <h4 className="text-sm font-black text-[#141F38]">{mod.title}</h4>
-                        <span className="text-[10px] font-bold text-[#98A2B3] bg-[#F2F4F7] px-2 py-0.5 rounded-full ml-auto">{mod.lessons.length} dars</span>
-                      </div>
-                      <div className="divide-y divide-[#F9FAFB]">
-                        {mod.lessons.map((lesson, lesIdx) => (
-                          <div key={lesson.id} className="px-5 py-3 flex items-center gap-3 hover:bg-[#F9FAFB] transition-colors">
-                            <div className="w-6 h-6 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[10px] font-bold text-[#98A2B3]">{lesIdx + 1}</div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#141F38] truncate">{lesson.title}</p>
-                              {lesson.description && <p className="text-[10px] text-[#C0C5CD] truncate">{lesson.description}</p>}
+                {allTemplateQuizzes && allTemplateQuizzes.length > 0 ? (
+                  <div className="space-y-2">
+                    {allTemplateQuizzes.map(quiz => (
+                      <div
+                        key={quiz.id}
+                        onClick={() => { setSelectedQuizId(String(quiz.id)); setStep('quiz-detail'); }}
+                        className="p-4 rounded-2xl border border-[#F2F4F7] flex items-center justify-between hover:shadow-md hover:border-primary/30 cursor-pointer transition-all group"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors shrink-0">
+                            <BookOpen className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-black text-[#141F38] truncate group-hover:text-primary transition-colors">{quiz.title}</p>
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-[#98A2B3] mt-0.5">
+                              <span className="px-1.5 py-0.5 bg-[#EEF4FF] text-[#3538CD] rounded">{quiz.quiz_type.name}</span>
+                              <span>{quiz.question_count} savol</span>
+                              <span>·</span>
+                              <span>{Math.floor(quiz.time_limit / 60)} daq</span>
+                              <span>·</span>
+                              <span>{quiz.max_score} ball</span>
+                              <span>·</span>
+                              <span className="text-primary">Shablon</span>
                             </div>
+                          </div>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-[#D0D5DD] group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-[#98A2B3] font-medium text-center py-6">Shablon testlar hali yo'q</p>
+                )}
+              </div>
+
+              {/* Guruh testlari — har bir kurs uchun */}
+              {(courses ?? []).map(course => {
+                const CourseQuizzes = () => {
+                  const { data: cQuizzes } = useCourseQuizzes(course.id);
+                  if (!cQuizzes?.length) return null;
+                  return (
+                    <div className="bg-white p-6 md:p-8 rounded-[24px] border border-[#F2F4F7] shadow-sm space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-base font-black text-[#1D2939] flex items-center gap-2">
+                          <Layers className="w-5 h-5 text-[#3538CD]" />
+                          {course.title} ({cQuizzes.length})
+                        </h3>
+                        <span className="text-[10px] font-bold bg-[#EEF4FF] text-[#3538CD] px-2.5 py-1 rounded-full">{course.level.name}</span>
+                      </div>
+                      <div className="space-y-2">
+                        {cQuizzes.map(quiz => (
+                          <div
+                            key={quiz.id}
+                            onClick={() => { setSelectedCourseId(String(course.id)); setSelectedCourseQuizId(String(quiz.id)); setStep('quiz-detail'); }}
+                            className="p-4 rounded-2xl border border-[#F2F4F7] flex items-center justify-between hover:shadow-md hover:border-[#3538CD]/30 cursor-pointer transition-all group"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className="w-10 h-10 rounded-xl bg-[#EEF4FF] flex items-center justify-center group-hover:bg-[#3538CD] transition-colors shrink-0">
+                                <Layers className="w-5 h-5 text-[#3538CD] group-hover:text-white transition-colors" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-[#141F38] truncate group-hover:text-[#3538CD] transition-colors">{quiz.title}</p>
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-[#98A2B3] mt-0.5">
+                                  <span className="px-1.5 py-0.5 bg-[#EEF4FF] text-[#3538CD] rounded">{quiz.quiz_type.name}</span>
+                                  <span>{quiz.question_count} savol</span>
+                                  <span>·</span>
+                                  <span>{Math.floor(quiz.time_limit / 60)} daq</span>
+                                  <span>·</span>
+                                  <span className={quiz.is_active ? 'text-[#22C55E]' : 'text-[#F04438]'}>{quiz.is_active ? 'Faol' : 'Nofaol'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-[#D0D5DD] group-hover:text-[#3538CD] group-hover:translate-x-1 transition-all shrink-0" />
                           </div>
                         ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                  );
+                };
+                return <CourseQuizzes key={course.id} />;
+              })}
             </div>
           )}
 
-          {/* Step 3: Create Quiz */}
-          {selectedLevelId && lessonOptions.length > 0 && (
-            <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#22C55E] to-[#16A34A] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-green-500/20">3</div>
-                  <div>
-                    <h3 className="text-lg font-black text-[#1D2939]">Test yarating</h3>
-                    <p className="text-xs font-medium text-[#98A2B3]">Darsga test biriktiring — guruh yaratilganda avtomatik klonlanadi</p>
-                  </div>
-                </div>
-                {!showCreateQuiz && (
-                  <button onClick={() => setShowCreateQuiz(true)} className="flex items-center gap-2 bg-gradient-to-r from-primary to-[#EA580C] text-white px-6 py-3 rounded-xl font-black text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 hover:shadow-xl transition-all">
-                    <Plus className="w-4 h-4" /> Yangi test
-                  </button>
-                )}
-              </div>
-
-              {showCreateQuiz && (
-                <form onSubmit={handleQuizSubmit(onCreateQuiz)} className="bg-gradient-to-br from-[#FFF7ED] to-white p-6 md:p-8 rounded-2xl border-2 border-primary/20 shadow-xl space-y-5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center"><Plus className="w-5 h-5 text-white" /></div>
-                      <h4 className="text-lg font-black text-[#1D2939]">Yangi test yaratish</h4>
-                    </div>
-                    <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); }} className="p-2 rounded-xl hover:bg-white/80"><X className="w-5 h-5 text-[#98A2B3]" /></button>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2 space-y-1.5">
-                      <label className="text-xs font-bold text-[#667085] ml-1">Test nomi *</label>
-                      <input {...regQuiz('title')} placeholder="Masalan: Present Simple Quiz" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.title ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-[#667085] ml-1">Dars tanlang *</label>
-                      <CustomSelect
-                        options={lessonOptions}
-                        value={watchedLesson}
-                        onChange={(val) => setQuizValue('lesson', val, { shouldValidate: true })}
-                        placeholder="Darsni tanlang..."
-                        className={quizErrors.lesson ? 'ring-2 ring-red-400 rounded-xl' : ''}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold text-[#667085] ml-1">Test turi *</label>
-                        <button type="button" onClick={() => setShowCreateType(!showCreateType)} className="text-[10px] font-bold text-primary hover:underline">+ Yangi tur</button>
-                      </div>
-                      {showCreateType && (
-                        <div className="flex gap-2 mb-2">
-                          <input placeholder="Nomi" value={newTypeName} onChange={(e) => { setNewTypeName(e.target.value); setNewTypeSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-')); }} className="flex-1 px-3 py-2 bg-white border border-[#E4E7EC] rounded-lg text-xs outline-none" />
-                          <button type="button" onClick={() => { if (newTypeName) createQuizTypeMutation.mutate({ name: newTypeName, slug: newTypeSlug }, { onSuccess: () => { setNewTypeName(''); setNewTypeSlug(''); setShowCreateType(false); } }); }} disabled={!newTypeName} className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-bold disabled:opacity-50">Qo'shish</button>
-                        </div>
-                      )}
-                      <CustomSelect
-                        options={quizTypeOptions}
-                        value={watchedQuizType}
-                        onChange={(val) => setQuizValue('quiz_type', val, { shouldValidate: true })}
-                        placeholder="Turni tanlang..."
-                        className={quizErrors.quiz_type ? 'ring-2 ring-red-400 rounded-xl' : ''}
-                      />
-                    </div>
-                    <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Max ball</label><input {...regQuiz('max_score')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">O'tish balli</label><input {...regQuiz('passing_score')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Jarima</label><input {...regQuiz('penalty_per_retake')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
-                    <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Vaqt (soniya)</label><input {...regQuiz('time_limit')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
-                  </div>
-                  <button type="submit" disabled={createQuizMutation.isPending} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-70">
-                    {createQuizMutation.isPending ? 'Yaratilmoqda...' : '+ Test yaratish'}
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* Step 4: Template quizzes list */}
-          {templateQuizzes && templateQuizzes.length > 0 && (
-            <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-5">
+          {/* ===== TEMPLATE TAB ===== */}
+          {activeTab === 'template' && (
+          <>
+          {/* Level tanlash */}
+          <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-5">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#8B5CF6] to-[#7C3AED] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-purple-500/20">4</div>
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-[#EA580C] flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                  <BookOpen className="w-5 h-5" />
+                </div>
                 <div>
-                  <h3 className="text-lg font-black text-[#1D2939]">Savollar qo'shing</h3>
-                  <p className="text-xs font-medium text-[#98A2B3]">Test ustiga bosing va savollar qo'shing</p>
+                  <h3 className="text-lg font-black text-[#1D2939]">Shablon testlar {allTemplateQuizzes?.length ? `(${allTemplateQuizzes.length})` : ''}</h3>
+                  <p className="text-xs font-medium text-[#98A2B3]">Daraja bo'yicha filtrlash yoki barcha testlarni ko'ring</p>
                 </div>
               </div>
-              <div className="space-y-3">
+              {isAdmin && selectedLevelId && lessonOptions.length > 0 && !showCreateQuiz && (
+                <button onClick={() => setShowCreateQuiz(true)} className="flex items-center gap-2 bg-gradient-to-r from-primary to-[#EA580C] text-white px-5 py-2.5 rounded-xl font-black text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all">
+                  <Plus className="w-4 h-4" /> Yangi test
+                </button>
+              )}
+            </div>
+            <div className="max-w-md">
+              <CustomSelect options={levelOptions} value={selectedLevelId} onChange={(val) => { setSelectedLevelId(val); setSelectedQuizId(''); setShowCreateQuiz(false); }} placeholder="Darajani tanlang..." />
+            </div>
+          </div>
+
+          {/* Test yaratish formasi */}
+          {showCreateQuiz && (
+            <form onSubmit={handleQuizSubmit(onCreateQuiz)} className="bg-gradient-to-br from-[#FFF7ED] to-white p-6 md:p-8 rounded-[28px] border-2 border-primary/20 shadow-xl space-y-5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center"><Plus className="w-5 h-5 text-white" /></div>
+                  <h4 className="text-lg font-black text-[#1D2939]">Yangi test yaratish</h4>
+                </div>
+                <button type="button" onClick={() => { setShowCreateQuiz(false); resetQuiz(); }} className="p-2 rounded-xl hover:bg-white/80"><X className="w-5 h-5 text-[#98A2B3]" /></button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2 space-y-1.5">
+                  <label className="text-xs font-bold text-[#667085] ml-1">Test nomi *</label>
+                  <input {...regQuiz('title')} placeholder="Masalan: Present Simple Quiz" className={`w-full px-4 py-3 bg-[#F9FAFB] border rounded-xl text-sm font-medium outline-none ${quizErrors.title ? 'border-red-400' : 'border-[#F2F4F7]'}`} />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[#667085] ml-1">Dars tanlang *</label>
+                  <CustomSelect options={lessonOptions} value={watchedLesson} onChange={(val) => setQuizValue('lesson', val, { shouldValidate: true })} placeholder="Darsni tanlang..." className={quizErrors.lesson ? 'ring-2 ring-red-400 rounded-xl' : ''} />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-[#667085] ml-1">Test turi *</label>
+                    <button type="button" onClick={() => setShowCreateType(!showCreateType)} className="text-[10px] font-bold text-primary hover:underline">+ Yangi tur</button>
+                  </div>
+                  {showCreateType && (
+                    <div className="flex gap-2 mb-2">
+                      <input placeholder="Nomi" value={newTypeName} onChange={(e) => setNewTypeName(e.target.value)} className="flex-1 px-3 py-2 bg-white border border-[#E4E7EC] rounded-lg text-xs outline-none" />
+                      <button type="button" onClick={() => { if (newTypeName) createQuizTypeMutation.mutate({ name: newTypeName }, { onSuccess: () => { setNewTypeName(''); setShowCreateType(false); } }); }} disabled={!newTypeName} className="px-3 py-2 bg-primary text-white rounded-lg text-xs font-bold disabled:opacity-50">Qo'shish</button>
+                    </div>
+                  )}
+                  <CustomSelect options={quizTypeOptions} value={watchedQuizType} onChange={(val) => setQuizValue('quiz_type', val, { shouldValidate: true })} placeholder="Turni tanlang..." className={quizErrors.quiz_type ? 'ring-2 ring-red-400 rounded-xl' : ''} />
+                </div>
+                <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Max ball</label><input {...regQuiz('max_score')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
+                <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">O'tish balli</label><input {...regQuiz('passing_score')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
+                <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Jarima</label><input {...regQuiz('penalty_per_retake')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
+                <div className="space-y-1.5"><label className="text-xs font-bold text-[#667085] ml-1">Vaqt (soniya)</label><input {...regQuiz('time_limit')} type="number" className="w-full px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm outline-none" /></div>
+              </div>
+              <button type="submit" disabled={createQuizMutation.isPending} className="px-6 py-3 bg-primary text-white rounded-xl font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-70">
+                {createQuizMutation.isPending ? 'Yaratilmoqda...' : '+ Test yaratish'}
+              </button>
+            </form>
+          )}
+
+          {/* Modullar → Darslar (faqat level tanlaganda) */}
+          {selectedLevelId && levelDetail && levelDetail.modules.length > 0 && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-4 text-xs font-bold text-[#98A2B3]">
+                <span>{levelDetail.name}</span>
+                <span>·</span>
+                <span>{levelDetail.modules.length} modul</span>
+                <span>·</span>
+                <span>{levelDetail.modules.reduce((s, m) => s + m.lessons.length, 0)} dars</span>
+                <span>·</span>
+                <span className="text-primary">{filteredTemplateQuizzes?.length ?? 0} test</span>
+              </div>
+              {levelDetail.modules.map((mod, modIdx) => (
+                <div key={mod.id} className="bg-white rounded-[24px] border border-[#F2F4F7] shadow-sm overflow-hidden">
+                  <div className="px-5 py-4 bg-gradient-to-r from-[#F8F9FA] to-white border-b border-[#F2F4F7] flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 font-black text-xs">{modIdx + 1}</div>
+                    <h4 className="text-sm font-black text-[#141F38] flex-1">{mod.title}</h4>
+                    <span className="text-[10px] font-bold text-[#98A2B3] bg-[#F2F4F7] px-2.5 py-1 rounded-full">{mod.lessons.length} dars</span>
+                  </div>
+                  <div className="divide-y divide-[#F9FAFB]">
+                    {mod.lessons.map((lesson, lesIdx) => (
+                      <div key={lesson.id} className="px-5 py-4 flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-[#F2F4F7] flex items-center justify-center text-[10px] font-bold text-[#98A2B3]">{lesIdx + 1}</div>
+                        <p className="text-sm font-bold text-[#141F38] flex-1">{lesson.title}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedLevelId && levelDetail && levelDetail.modules.length === 0 && (
+            <div className="text-center py-12 bg-white rounded-[28px] border border-dashed border-[#E4E7EC]">
+              <BookOpen className="w-10 h-10 text-[#D0D5DD] mx-auto mb-3" />
+              <p className="text-[#98A2B3] font-bold">Bu darajada modullar yo'q</p>
+            </div>
+          )}
+
+          {/* BARCHA SHABLON TESTLAR — level tanlamasa ham ko'rinadi */}
+          {templateQuizzes && templateQuizzes.length > 0 && (
+            <div className="bg-white p-6 md:p-8 rounded-[24px] border border-[#F2F4F7] shadow-sm space-y-4">
+              <h3 className="text-base font-black text-[#1D2939] flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-primary" />
+                {selectedLevelId ? `${levelDetail?.name ?? ''} — testlar` : 'Barcha shablon testlar'} ({templateQuizzes.length})
+              </h3>
+              <div className="space-y-2">
                 {templateQuizzes.map(quiz => (
                   <div
                     key={quiz.id}
                     onClick={() => { setSelectedQuizId(String(quiz.id)); setStep('quiz-detail'); }}
-                    className="p-5 rounded-2xl border border-[#F2F4F7] flex items-center justify-between hover:shadow-lg hover:border-primary/30 cursor-pointer transition-all duration-300 group bg-gradient-to-r from-white to-[#FAFAFA] hover:from-[#FFF7ED] hover:to-white"
+                    className="p-4 rounded-2xl border border-[#F2F4F7] flex items-center justify-between hover:shadow-md hover:border-primary/30 cursor-pointer transition-all group"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center group-hover:from-primary group-hover:to-[#EA580C] transition-all duration-300 shadow-sm">
-                        <CheckCircle className="w-6 h-6 text-primary group-hover:text-white transition-colors" />
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary transition-colors shrink-0">
+                        <CheckCircle className="w-5 h-5 text-primary group-hover:text-white transition-colors" />
                       </div>
-                      <div>
-                        <p className="text-[15px] font-black text-[#141F38] group-hover:text-primary transition-colors">{quiz.title}</p>
-                        <div className="flex items-center gap-3 text-[11px] font-semibold text-[#98A2B3] mt-1">
-                          <span className="px-2 py-0.5 bg-[#EEF4FF] text-[#3538CD] rounded-md text-[10px] font-bold">{quiz.quiz_type.name}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-black text-[#141F38] truncate group-hover:text-primary transition-colors">{quiz.title}</p>
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-[#98A2B3] mt-0.5">
+                          <span className="px-1.5 py-0.5 bg-[#EEF4FF] text-[#3538CD] rounded">{quiz.quiz_type.name}</span>
                           <span>{quiz.question_count} savol</span>
                           <span>·</span>
                           <span>{Math.floor(quiz.time_limit / 60)} daq</span>
@@ -319,23 +399,18 @@ const Tests = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">Savollar →</span>
-                      <ChevronRight className="w-5 h-5 text-[#D0D5DD] group-hover:text-primary group-hover:translate-x-1 transition-all" />
-                    </div>
+                    <ChevronRight className="w-5 h-5 text-[#D0D5DD] group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {selectedLevelId && templateQuizzes && templateQuizzes.length === 0 && !showCreateQuiz && lessonOptions.length > 0 && (
-            <div className="text-center py-14 bg-gradient-to-b from-[#F9FAFB] to-white rounded-[28px] border border-dashed border-[#E4E7EC]">
-              <div className="w-16 h-16 rounded-2xl bg-[#F2F4F7] flex items-center justify-center mx-auto mb-4">
-                <HelpCircle className="w-8 h-8 text-[#D0D5DD]" />
-              </div>
-              <p className="text-[#98A2B3] font-black text-lg">Bu darajada testlar hali yo'q</p>
-              <p className="text-[#D0D5DD] text-sm mt-2">Yuqoridagi "Yangi test" tugmasini bosing</p>
+          {templateQuizzes && templateQuizzes.length === 0 && !showCreateQuiz && (
+            <div className="text-center py-10 bg-[#F9FAFB] rounded-[24px] border border-dashed border-[#E4E7EC]">
+              <HelpCircle className="w-10 h-10 text-[#D0D5DD] mx-auto mb-3" />
+              <p className="text-[#98A2B3] font-bold">Shablon testlar hali yo'q</p>
+              <p className="text-[#D0D5DD] text-xs mt-1">"Yangi test" tugmasini bosing</p>
             </div>
           )}
           </>
@@ -344,45 +419,99 @@ const Tests = () => {
           {/* ===== COURSE TAB ===== */}
           {activeTab === 'course' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider">Guruh tanlang</label>
-                  <CustomSelect options={(courses ?? []).map(c => ({ label: c.title, value: String(c.id) }))} value={selectedCourseId} onChange={(val) => { setSelectedCourseId(val); setSelectedCourseQuizId(''); }} placeholder="Guruhni tanlang..." />
+              {/* Guruh tanlash */}
+              <div className="bg-white p-6 md:p-8 rounded-[28px] border border-[#F2F4F7] shadow-sm space-y-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#141F38] to-[#1E3A5F] flex items-center justify-center text-white shadow-lg shadow-[#141F38]/20">
+                    <Layers className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-[#1D2939]">Guruh testlari</h3>
+                    <p className="text-xs font-medium text-[#98A2B3]">{isTeacher ? "O'z guruhingiz" : "Barcha guruhlar"}dagi klonlangan testlar</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-[#667085] ml-1 uppercase tracking-wider">Test tanlang</label>
-                  {courseQuizzesLoading ? (
-                    <div className="flex items-center gap-2 px-4 py-3 bg-[#F2F4F7] rounded-xl"><Loader2 className="w-4 h-4 animate-spin text-[#98A2B3]" /></div>
-                  ) : (
-                    <CustomSelect options={(courseQuizzes ?? []).map(q => ({ label: `${q.title} (${q.question_count} savol)`, value: String(q.id) }))} value={selectedCourseQuizId} onChange={(val) => setSelectedCourseQuizId(val)} placeholder="Testni tanlang..." />
-                  )}
+                <div className="max-w-md">
+                  <CustomSelect options={(courses ?? []).map(c => ({ label: c.title, value: String(c.id) }))} value={selectedCourseId} onChange={(val) => { setSelectedCourseId(val); setSelectedCourseQuizId(''); setShowEditQuiz(false); }} placeholder="Guruhni tanlang..." />
                 </div>
               </div>
 
-              {/* Quiz actions — teacher: to'liq CRUD, admin: faqat ko'rish */}
+              {/* Testlar ro'yxati — kurs tanlaganda */}
+              {selectedCourseId && (
+                courseQuizzesLoading ? (
+                  <div className="flex items-center justify-center py-12"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
+                ) : !courseQuizzes?.length ? (
+                  <div className="text-center py-12 bg-white rounded-[24px] border border-dashed border-[#E4E7EC]">
+                    <HelpCircle className="w-10 h-10 text-[#D0D5DD] mx-auto mb-3" />
+                    <p className="text-[#98A2B3] font-bold">Bu guruhda testlar yo'q</p>
+                    <p className="text-[#D0D5DD] text-xs mt-1">Guruh yaratilganda shablon testlar avtomatik klonlanadi</p>
+                  </div>
+                ) : (
+                  <div className="bg-white p-6 md:p-8 rounded-[24px] border border-[#F2F4F7] shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-base font-black text-[#1D2939]">{selectedCourse?.title} — {courseQuizzes.length} ta test</h3>
+                    </div>
+                    <div className="space-y-2">
+                      {courseQuizzes.map(quiz => {
+                        const isSelected = selectedCourseQuizId === String(quiz.id);
+                        return (
+                          <div
+                            key={quiz.id}
+                            onClick={() => setSelectedCourseQuizId(isSelected ? '' : String(quiz.id))}
+                            className={`p-4 rounded-2xl border flex items-center justify-between cursor-pointer transition-all ${
+                              isSelected ? 'border-primary/30 bg-[#FFF7ED] shadow-md' : 'border-[#F2F4F7] hover:shadow-md hover:border-[#E4E7EC]'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${isSelected ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
+                                <CheckCircle className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-black text-[#141F38] truncate">{quiz.title}</p>
+                                <div className="flex items-center gap-2 text-[10px] font-bold text-[#98A2B3] mt-0.5">
+                                  <span className="px-1.5 py-0.5 bg-[#EEF4FF] text-[#3538CD] rounded">{quiz.quiz_type.name}</span>
+                                  <span>{quiz.question_count} savol</span>
+                                  <span>·</span>
+                                  <span>{Math.floor(quiz.time_limit / 60)} daq</span>
+                                  <span>·</span>
+                                  <span>{quiz.max_score} ball</span>
+                                  <span>·</span>
+                                  <span className={quiz.is_active ? 'text-[#22C55E]' : 'text-[#F04438]'}>{quiz.is_active ? 'Faol' : 'Nofaol'}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight className={`w-5 h-5 shrink-0 transition-all ${isSelected ? 'text-primary rotate-90' : 'text-[#D0D5DD]'}`} />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )
+              )}
+
+              {/* Tanlangan test uchun amallar */}
               {selectedCourseQuizId && quizDetail && (
                 <div className="flex flex-wrap items-center gap-3">
-                  <button onClick={() => { setSelectedCourseQuizId(selectedCourseQuizId); setSelectedQuizId(''); setStep('quiz-detail'); }}
+                  <button onClick={() => { setStep('quiz-detail'); }}
                     className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all">
                     <BookOpen className="w-4 h-4" /> Savollarni ko'rish
                   </button>
-                  {isTeacher && (
-                    <>
-                      <button onClick={() => { setEditQuizData({ title: quizDetail.title, max_score: String(quizDetail.max_score), passing_score: String(quizDetail.passing_score), penalty_per_retake: String(quizDetail.penalty_per_retake), time_limit: String(quizDetail.time_limit), is_active: true }); setShowEditQuiz(true); }}
-                        className="flex items-center gap-2 bg-[#F2F4F7] text-[#141F38] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#E4E7EC] transition-all">
-                        <Pencil className="w-4 h-4" /> Sozlamalar
-                      </button>
-                      <button onClick={() => { customAlert.confirm({ variant: 'warning', title: "Testni o'chirish", description: "Bu test o'chiriladi.", confirmText: "O'chirish", cancelText: 'Bekor', icon: Trash2, onConfirm: () => deleteQuizMutation.mutate(Number(selectedCourseQuizId), { onSuccess: () => setSelectedCourseQuizId('') }) }); }}
-                        className="flex items-center gap-2 bg-[#FEE4E2] text-[#F04438] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#F04438] hover:text-white transition-all">
-                    <Trash2 className="w-4 h-4" /> O'chirish
-                  </button>
-                    </>
+                  {(isTeacher || isAdmin) && (
+                    <button onClick={() => { setEditQuizData({ title: quizDetail.title, max_score: String(quizDetail.max_score), passing_score: String(quizDetail.passing_score), penalty_per_retake: String(quizDetail.penalty_per_retake), time_limit: String(quizDetail.time_limit), is_active: true }); setShowEditQuiz(true); }}
+                      className="flex items-center gap-2 bg-[#F2F4F7] text-[#141F38] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#E4E7EC] transition-all">
+                      <Pencil className="w-4 h-4" /> Sozlamalar
+                    </button>
+                  )}
+                  {isAdmin && (
+                    <button onClick={() => { customAlert.confirm({ variant: 'warning', title: "Testni o'chirish", description: "Bu test o'chiriladi.", confirmText: "O'chirish", cancelText: 'Bekor', icon: Trash2, onConfirm: () => deleteQuizMutation.mutate(Number(selectedCourseQuizId), { onSuccess: () => setSelectedCourseQuizId('') }) }); }}
+                      className="flex items-center gap-2 bg-[#FEE4E2] text-[#F04438] px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-[#F04438] hover:text-white transition-all">
+                      <Trash2 className="w-4 h-4" /> O'chirish
+                    </button>
                   )}
                 </div>
               )}
 
-              {/* Edit quiz form — faqat teacher */}
-              {isTeacher && showEditQuiz && quizDetail && (
+              {/* Edit quiz form — teacher va admin */}
+              {(isTeacher || isAdmin) && showEditQuiz && quizDetail && (
                 <div className="bg-white p-6 rounded-2xl border border-[#F2F4F7] space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-black text-[#1D2939]">Test sozlamalarini tahrirlash</h3>
@@ -443,8 +572,8 @@ const Tests = () => {
                 </div>
               </div>
 
-              {/* Actions — admin: shablon CRUD | teacher: guruh CRUD | admin+guruh: faqat ko'rish */}
-              {(isAdmin || isTeacher) && !(isAdmin && activeTab === 'course') && (
+              {/* Actions — admin: full CRUD (savol qo'shish + o'chirish), teacher: faqat ko'rish */}
+              {isAdmin && (
                 <div className="flex flex-wrap gap-3">
                   {!showAddQuestion && (
                     <button onClick={() => setShowAddQuestion(true)} className="flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-all">
@@ -464,6 +593,16 @@ const Tests = () => {
                   <button onClick={() => setShowAddQuestion(false)} className="absolute top-4 right-4 p-2 rounded-xl hover:bg-[#F9FAFB]"><X className="w-5 h-5 text-[#98A2B3]" /></button>
                   <h3 className="text-xl font-black text-[#1D2939]">Yangi savol</h3>
                   <textarea placeholder="Savol matni..." value={questionText} onChange={(e) => setQuestionText(e.target.value)} className="w-full bg-[#F9FAFB] rounded-2xl py-4 px-5 text-sm font-bold outline-none min-h-[80px] resize-none border-none focus:ring-2 focus:ring-primary/20" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#667085] ml-1">Ball (to'g'ri javob uchun)</label>
+                      <input type="number" min={0} value={questionPoints} onChange={(e) => setQuestionPoints(Number(e.target.value) || 0)} className="w-full bg-[#F9FAFB] rounded-xl py-3 px-4 text-sm font-bold outline-none border-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-[#667085] ml-1">Jarima (noto'g'ri javob uchun)</label>
+                      <input type="number" min={0} value={questionPenalty} onChange={(e) => setQuestionPenalty(Number(e.target.value) || 0)} className="w-full bg-[#F9FAFB] rounded-xl py-3 px-4 text-sm font-bold outline-none border-none focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {answers.map((a, idx) => (
                       <div key={idx} className="relative">
@@ -502,11 +641,11 @@ const Tests = () => {
                       question={q.text}
                       answers={q.answers.map((a: { id: number; text: string; is_correct?: boolean; order: number }) => ({ id: a.id, text: a.text, is_correct: a.is_correct, order: a.order }))}
                       media={q.media ?? []}
-                      onDelete={() => { customAlert.confirm({ variant: 'warning', title: "Savolni o'chirish", confirmText: "O'chirish", cancelText: 'Bekor qilish', icon: Trash2, description: `${idx + 1}-savol`, onConfirm: () => deleteQuestionMutation.mutate(q.id) }); }}
-                      onEditQuestion={(qId, data) => updateQuestionMutation.mutate({ questionId: qId, data })}
-                      onUpdateAnswers={(qId, ans) => updateAnswersMutation.mutate({ questionId: qId, answers: ans })}
-                      onUploadMedia={(qId, file, type) => { const fd = new FormData(); fd.append('file', file); fd.append('media_type', type); uploadMediaMutation.mutate({ questionId: qId, formData: fd }); }}
-                      onDeleteMedia={(mId) => deleteMediaMutation.mutate(mId)}
+                      onDelete={isAdmin ? () => { customAlert.confirm({ variant: 'warning', title: "Savolni o'chirish", confirmText: "O'chirish", cancelText: 'Bekor qilish', icon: Trash2, description: `${idx + 1}-savol`, onConfirm: () => deleteQuestionMutation.mutate(q.id) }); } : undefined}
+                      onEditQuestion={(isTeacher || isAdmin) ? (qId, data) => updateQuestionMutation.mutate({ questionId: qId, data }) : undefined}
+                      onUpdateAnswers={(isTeacher || isAdmin) ? (qId, ans) => updateAnswersMutation.mutate({ questionId: qId, answers: ans }) : undefined}
+                      onUploadMedia={isAdmin ? (qId, file, type) => { const fd = new FormData(); fd.append('file', file); fd.append('media_type', type); uploadMediaMutation.mutate({ questionId: qId, formData: fd }); } : undefined}
+                      onDeleteMedia={isAdmin ? (mId) => deleteMediaMutation.mutate(mId) : undefined}
                     />
                   ))}
                 </div>

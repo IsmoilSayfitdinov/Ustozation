@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Search, Filter, Plus, Users, CheckCircle, GraduationCap, Loader2 } from 'lucide-react';
+import { Search, Plus, Users, CheckCircle, GraduationCap, Loader2 } from 'lucide-react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import GroupCard from '@/components/private/admin/Groups/GroupCard';
 import ViewGroupDialog from '@/components/private/admin/Groups/ViewGroupDialog';
 import CreateGroupDialog from '@/components/private/admin/Groups/CreateGroupDialog';
@@ -68,17 +69,13 @@ const AdminGroups = () => {
             />
           </div>
 
-          <div className="relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#667085] pointer-events-none" />
-            <select
+          <div className="w-40">
+            <CustomSelect
+              options={[{ label: 'Barcha', value: 'all' }, { label: 'Aktiv', value: 'active' }, { label: 'Nofaol', value: 'inactive' }]}
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="pl-11 pr-10 py-2.5 bg-[#F2F4F7] border-none rounded-xl text-sm font-bold text-[#1C2434] appearance-none focus:ring-2 focus:ring-[#F97316]/20 transition-all outline-none cursor-pointer hover:bg-[#E4E7EC]"
-            >
-              <option value="all">Barcha</option>
-              <option value="active">Aktiv</option>
-              <option value="inactive">Nofaol</option>
-            </select>
+              onChange={setStatusFilter}
+              placeholder="Holat"
+            />
           </div>
 
           {isTeacher && (
@@ -156,7 +153,7 @@ const AdminGroups = () => {
                 : 'Birinchi guruhingizni yaratib, o\'quvchilaringizni qo\'shishni boshlang'
               }
             </p>
-            {!searchQuery && statusFilter === 'all' && (
+            {!searchQuery && statusFilter === 'all' && isTeacher && (
               <button
                 onClick={() => setIsCreateOpen(true)}
                 className="flex items-center gap-2 bg-[#F97316] text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-[#F97316]/20 hover:-translate-y-0.5 transition-all"

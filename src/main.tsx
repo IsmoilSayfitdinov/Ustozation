@@ -10,7 +10,8 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: true,
-      staleTime: 2 * 60 * 1000, // 2 daqiqa global stale
+      refetchOnMount: true,
+      staleTime: 0, // Har doim yangi data — CRUD darhol ko'rinadi
     },
   },
 });

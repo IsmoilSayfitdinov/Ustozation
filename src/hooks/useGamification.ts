@@ -8,7 +8,7 @@ export function useStreak() {
       const { data } = await gamificationApi.getStreak();
       return data.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -29,9 +29,9 @@ export function useBadges() {
     queryKey: ["badges"],
     queryFn: async () => {
       const { data } = await gamificationApi.getBadges();
-      return data.results;
+      return data.data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -42,7 +42,7 @@ export function useMyBadges() {
       const { data } = await gamificationApi.getMyBadges();
       return data.data;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
   });
 }
 

@@ -41,12 +41,6 @@ const CurrentLessonCard = ({ title, completed, total, onContinue }: CurrentLesso
           </div>
         </div>
 
-        <button 
-          onClick={onContinue}
-          className="px-4 py-2 bg-primary text-white rounded-[14px] text-[11px] font-bold tracking-wide hover:shadow-lg hover:shadow-primary/30 active:scale-95 transition-all duration-300 whitespace-nowrap border-none cursor-pointer hidden sm:block"
-        >
-          Davom etish
-        </button>
       </div>
       
       <button 

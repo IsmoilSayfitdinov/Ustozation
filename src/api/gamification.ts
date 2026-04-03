@@ -1,5 +1,5 @@
 import client from "./client";
-import type { ApiResponse, PaginatedResponse, PointsData, RankingEntry, StreakData, BadgeType, StudentBadge } from "@/types/api";
+import type { ApiResponse, PointsData, RankingEntry, StreakData, BadgeType, StudentBadge } from "@/types/api";
 
 export const gamificationApi = {
   getStreak: () =>
@@ -15,7 +15,7 @@ export const gamificationApi = {
 
   // Badges
   getBadges: () =>
-    client.get<PaginatedResponse<BadgeType>>("/gamification/badge-types/"),
+    client.get<ApiResponse<BadgeType[]>>("/gamification/badge-types/"),
 
   getMyBadges: () =>
     client.get<ApiResponse<StudentBadge[]>>("/gamification/badges/"),

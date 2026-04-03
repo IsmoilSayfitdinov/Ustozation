@@ -18,7 +18,7 @@ export function useLandingPage() {
       const { data } = await landingApi.getLandingPage();
       return data;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
   });
 }
 

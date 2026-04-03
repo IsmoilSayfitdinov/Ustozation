@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { MessageSquare, CreditCard, Sparkles, Settings, Plus, Pencil, Trash2, Star, Eye, EyeOff, Loader2, Save, Phone, Mail, MapPin, Send, AtSign, Video, ExternalLink } from 'lucide-react';
+import CustomSelect from '@/components/ui/CustomSelect';
 import {
   useReviews, useCreateReview, useUpdateReview, useDeleteReview,
   usePricingPlans, useCreatePricingPlan, useUpdatePricingPlan, useDeletePricingPlan,
@@ -418,16 +419,14 @@ function FeaturesTab() {
                     <span className="material-symbols-outlined text-[#F97316] text-xl">{form.icon}</span>
                   </div>
                 )}
-                <select
-                  value={form.icon}
-                  onChange={(e) => setForm(p => ({ ...p, icon: e.target.value }))}
-                  className="flex-1 px-4 py-3 bg-[#F9FAFB] border border-[#F2F4F7] rounded-xl text-sm font-medium outline-none focus:border-[#F97316]/30 appearance-none cursor-pointer"
-                >
-                  <option value="">Icon tanlang</option>
-                  {ICON_OPTIONS.map(opt => (
-                    <option key={opt.value} value={opt.value}>{opt.label} ({opt.value})</option>
-                  ))}
-                </select>
+                <div className="flex-1">
+                  <CustomSelect
+                    options={ICON_OPTIONS.map(opt => ({ label: `${opt.label} (${opt.value})`, value: opt.value }))}
+                    value={form.icon}
+                    onChange={(val) => setForm(p => ({ ...p, icon: val }))}
+                    placeholder="Icon tanlang..."
+                  />
+                </div>
               </div>
             </div>
           </div>

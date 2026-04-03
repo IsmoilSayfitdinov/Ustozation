@@ -23,15 +23,15 @@ const AdminHome = () => {
     return [...ranking].sort((a, b) => a.rank - b.rank).slice(0, 3);
   }, [ranking]);
 
-  // Haftalik mock data (backend da haftalik endpoint yo'q, CourseStats dan approximation)
-  const weeklyData = useMemo(() => {
-    const days = ['Du', 'Se', 'Cho', 'Pa', 'Ju', 'Sha', 'Ya'];
-    const todayIdx = new Date().getDay();
-    return days.map((day, i) => ({
-      day,
-      value: stats ? Math.round((stats.total_attempts / 7) * (0.5 + Math.random())) : 0,
-      isToday: i === (todayIdx === 0 ? 6 : todayIdx - 1),
-    }));
+  // Haftalik statistika — real data mavjud emas, umumiy statsdan ko'rsatamiz
+  const summaryCards = useMemo(() => {
+    if (!stats) return [];
+    return [
+      { label: "O'rtacha ball", value: `${Math.round(stats.average_score)}%` },
+      { label: "Muvaffaqiyat", value: `${Math.round(stats.pass_rate)}%` },
+      { label: "Jami urinishlar", value: String(stats.total_attempts) },
+      { label: "Qiyin mavzular", value: String(stats.hardest_lessons.length) },
+    ];
   }, [stats]);
 
   // So'nggi talabalar (faoliyat sifatida)
@@ -46,7 +46,7 @@ const AdminHome = () => {
     if (active && payload?.[0]) {
       return (
         <div className="bg-[#141F38] text-white px-3 py-2 rounded-xl text-xs font-black shadow-xl">
-          {payload[0].value} ta urinish
+          O'rtacha: {payload[0].value}%
         </div>
       );
     }
@@ -110,33 +110,39 @@ const AdminHome = () => {
 
           {/* Middle Row: Chart + Top Students */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-            {/* Haftalik faoliyat chart */}
+            {/* Mavzular bo'yicha natijalar — real data */}
             <div className="lg:col-span-7 bg-white p-6 md:p-8 rounded-3xl border border-[#F2F4F7] shadow-sm">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-black text-[#1D2939]">Haftalik faoliyat</h3>
-                  <p className="text-xs font-medium text-[#98A2B3] mt-0.5">Talabalar aktivligi</p>
+                  <h3 className="text-lg font-black text-[#1D2939]">Mavzular bo'yicha natija</h3>
+                  <p className="text-xs font-medium text-[#98A2B3] mt-0.5">O'rtacha ball (eng qiyin → oson)</p>
                 </div>
                 <div className="flex items-center gap-2 text-xs font-bold text-[#98A2B3]">
                   <div className="w-3 h-3 rounded-full bg-primary" />
-                  Faol talabalar
+                  O'rtacha ball
                 </div>
               </div>
-              <div className="h-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#F2F4F7" />
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#98A2B3', fontSize: 12, fontWeight: 700 }} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#98A2B3', fontSize: 12, fontWeight: 600 }} />
-                    <Tooltip content={<CustomTooltip />} cursor={false} />
-                    <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={36}>
-                      {weeklyData.map((entry, i) => (
-                        <Cell key={i} fill={entry.isToday ? '#F97316' : '#FDBA74'} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {stats.hardest_lessons.length > 0 ? (
+                <div className="h-[220px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.hardest_lessons.map(l => ({ name: l.quiz__lesson__title, value: Math.round(l.avg) }))} margin={{ top: 0, right: 0, left: -20, bottom: 0 }} layout="vertical">
+                      <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#F2F4F7" />
+                      <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#98A2B3', fontSize: 12, fontWeight: 600 }} />
+                      <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#667085', fontSize: 11, fontWeight: 700 }} width={120} />
+                      <Tooltip content={<CustomTooltip />} cursor={false} />
+                      <Bar dataKey="value" radius={[0, 8, 8, 0]} barSize={24}>
+                        {stats.hardest_lessons.map((l, i) => (
+                          <Cell key={i} fill={l.avg < 40 ? '#F04438' : l.avg < 60 ? '#F97316' : l.avg < 80 ? '#EAB308' : '#22C55E'} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="h-[220px] flex items-center justify-center">
+                  <p className="text-sm font-bold text-[#98A2B3]">Hali test natijalari yo'q</p>
+                </div>
+              )}
             </div>
 
             {/* Top talabalar */}

@@ -22,7 +22,7 @@ interface QuestionCardProps {
   answers: AnswerOption[];
   media: MediaItem[];
   onDelete?: () => void;
-  onEditQuestion?: (questionId: number, data: { text: string; order: number }) => void;
+  onEditQuestion?: (questionId: number, data: { text?: string; order?: number; points?: number; penalty?: number }) => void;
   onUpdateAnswers?: (questionId: number, answers: { text: string; is_correct: boolean; order: number }[]) => void;
   onUploadMedia?: (questionId: number, file: File, mediaType: string) => void;
   onDeleteMedia?: (mediaId: number) => void;

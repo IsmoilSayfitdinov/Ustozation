@@ -10,7 +10,7 @@ export function useLevels() {
       const { data } = await coursesApi.getLevels();
       return data.results;
     },
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
   });
 }
 
@@ -18,8 +18,9 @@ export function useCreateLevel() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; slug: string; description: string; order: number }) => {
-      const res = await coursesApi.createLevel(data);
+    mutationFn: async (data: { name: string; slug?: string; description: string; order: number }) => {
+      const payload = { ...data, slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') };
+      const res = await coursesApi.createLevel(payload);
       return res.data;
     },
     onSuccess: () => {
@@ -35,8 +36,9 @@ export function useCreateLevel() {
 export function useUpdateLevel() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<{ name: string; slug: string; description: string; order: number }> }) => {
-      const res = await coursesApi.updateLevel(id, data);
+    mutationFn: async ({ id, data }: { id: number; data: Partial<{ name: string; slug?: string; description: string; order: number }> }) => {
+      const payload = data.name ? { ...data, slug: data.slug || data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') } : data;
+      const res = await coursesApi.updateLevel(id, payload);
       return res.data;
     },
     onSuccess: () => {
@@ -217,7 +219,7 @@ export function useCreateModule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ levelId, data }: { levelId: number; data: { title: string; description: string; order: number, slug: string } }) => {
+    mutationFn: async ({ levelId, data }: { levelId: number; data: { title: string; description: string; order: number } }) => {
       const res = await coursesApi.createModule(levelId, data);
       return res.data;
     },
@@ -236,7 +238,7 @@ export function useUpdateModule() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { title?: string; description?: string; order?: number; slug?: string } }) => {
+    mutationFn: async ({ id, data }: { id: number; data: { title?: string; description?: string; order?: number } }) => {
       const res = await coursesApi.updateModule(id, data);
       return res.data;
     },

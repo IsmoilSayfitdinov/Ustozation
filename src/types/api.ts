@@ -85,6 +85,8 @@ export interface BadgeType {
   condition_type: 'first_quiz' | 'streak_days' | 'quizzes_passed' | 'total_points';
   condition_value: number;
   order: number;
+  earned: boolean;
+  earned_at: string | null;
 }
 
 export interface StudentBadge {
@@ -214,6 +216,8 @@ export interface Question {
   id: number;
   text: string;
   order: number;
+  points: number;
+  penalty?: number;  // teacher view da keladi, student view da kelmaydi
   answers: Answer[];
   media: QuestionMedia[];
 }
@@ -260,6 +264,7 @@ export interface AttemptAnswerResult {
   question_text: string;
   selected_text: string | null;
   is_correct: boolean;
+  points_earned: number;
 }
 
 export interface AttemptResult {
@@ -431,12 +436,16 @@ export interface AnswerPayload {
 export interface QuestionCreatePayload {
   text: string;
   order: number;
+  points?: number;
+  penalty?: number;
   answers: AnswerPayload[];
 }
 
 export interface QuestionEditPayload {
   text?: string;
   order?: number;
+  points?: number;
+  penalty?: number;
 }
 
 // --- Landing Admin CRUD ---
