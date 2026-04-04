@@ -57,10 +57,7 @@ const ProfileHeader = ({
           <PenLine className="w-4 h-4" />
           <span className="whitespace-nowrap">Tahrirlash</span>
         </button>
-        <button className="bg-[#F2F4F7] text-[#141F38] px-5 md:px-6 py-2.5 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-sm flex flex-1 items-center justify-center gap-2 hover:bg-[#EAECF0] transition-all">
-          <Settings className="w-4 h-4 md:w-5 md:h-5" />
-          <span className="whitespace-nowrap">Sozlamalar</span>
-        </button>
+     
       </div>
     </div>
   );

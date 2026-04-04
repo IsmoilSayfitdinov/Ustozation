@@ -81,7 +81,7 @@ const Login = () => {
 
           <button
             disabled={loginMutation.isPending}
-            className="w-full bg-primary text-white py-5 rounded-2xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 transition-all duration-300 cursor-pointer border-none shadow-lg shadow-primary/20 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full bg-primary dark:bg-orange-500 text-white py-5 rounded-2xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-1 active:scale-95 transition-all duration-300 cursor-pointer border-none shadow-lg shadow-primary/20 mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
           >
             {loginMutation.isPending ? "Kutilmoqda..." : "Kirish"}
           </button>

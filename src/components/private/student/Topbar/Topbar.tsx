@@ -63,39 +63,6 @@ const Topbar = ({ onMenuClick }: TopbarProps) => {
             <AvatarFallback className="bg-primary text-white font-black text-xs md:text-sm">{avatarLetter}</AvatarFallback>
           </Avatar>
 
-          <AnimatePresence>
-            {showDropdown && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                  className="absolute right-0 mt-3 w-56 bg-white dark:bg-[#1a1a1a] border border-[#F2F4F7] dark:border-white/10 rounded-2xl shadow-2xl p-2 z-50 overflow-hidden"
-                >
-                  <button
-                    onClick={() => { navigate('/student/profile'); setShowDropdown(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#141F38] dark:text-white font-bold text-sm hover:bg-[#F9FAFB] dark:hover:bg-white/5 transition-all"
-                  >
-                    <User className="w-4 h-4 text-primary" />
-                    Profil
-                  </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#141F38] dark:text-white font-bold text-sm hover:bg-[#F9FAFB] dark:hover:bg-white/5 transition-all">
-                    <Settings className="w-4 h-4 text-[#667085]" />
-                    Sozlamalar
-                  </button>
-                  <div className="h-px bg-[#F2F4F7] dark:bg-white/10 my-1 mx-2" />
-                  <button
-                    onClick={() => navigate('/login')}
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-[#F04438] font-bold text-sm hover:bg-[#FEE4E2]/50 dark:hover:bg-[#F04438]/10 transition-all"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Chiqish
-                  </button>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
