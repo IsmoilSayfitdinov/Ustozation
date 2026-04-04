@@ -36,7 +36,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
   const courseIndex = allLevels.findIndex(l => l.id === currentCourse.id);
 
   return (
-    <div className="min-h-screen bg-[#fafaf9] pt-24 pb-20">
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0a0a0a] pt-24 pb-20">
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20">
         {/* Back Button */}
         <button
@@ -55,7 +55,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${currentCourse.color} flex items-center justify-center text-white shadow-lg text-3xl font-black`}>
+              <div className={`w-16 h-16 rounded-2xl bg-linear-to-br ${currentCourse.color} flex items-center justify-center text-white shadow-lg text-3xl font-black`}>
                 {courseIndex >= 0 ? courseIndex + 1 : 1}
               </div>
 
@@ -94,7 +94,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
                   Kursga yozilish
                   <span className="material-symbols-outlined text-lg">arrow_forward</span>
                 </button>
-                <button className="px-8 py-4 rounded-2xl bg-white border border-outline-variant/30 text-on-surface font-headline font-black text-sm uppercase tracking-wider hover:bg-surface-container transition-all cursor-pointer">
+                <button className="px-8 py-4 rounded-2xl bg-white dark:bg-white/8 border border-outline-variant/30 dark:border-white/10 text-on-surface font-headline font-black text-sm uppercase tracking-wider hover:bg-surface-container dark:hover:bg-white/15 transition-all cursor-pointer">
                   Bepul sinov darsi
                 </button>
               </div>
@@ -108,7 +108,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-xl shadow-black/5"
+              className="bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] p-8 border border-outline-variant/10 dark:border-white/8 shadow-xl shadow-black/5"
             >
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-2xl">🎓</span>
@@ -117,7 +117,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
               <ul className="space-y-4">
                 {currentCourse.topics?.map((topic, i) => (
                   <li key={i} className="flex items-center gap-4 group">
-                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${currentCourse.color} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
+                    <div className={`w-8 h-8 rounded-full bg-linear-to-br ${currentCourse.color} flex items-center justify-center text-white text-xs font-black shadow-sm group-hover:scale-110 transition-transform`}>
                       {i + 1}
                     </div>
                     <span className="text-on-surface font-bold">{topic}</span>
@@ -131,7 +131,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-[2.5rem] p-8 border border-outline-variant/10 shadow-xl shadow-black/5"
+              className="bg-white dark:bg-[#1a1a1a] rounded-[2.5rem] p-8 border border-outline-variant/10 dark:border-white/8 shadow-xl shadow-black/5"
             >
               <div className="flex items-center gap-3 mb-6">
                 <span className="text-2xl">🎯</span>
@@ -140,7 +140,7 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
               <ul className="space-y-4">
                 {currentCourse.outcomes?.map((outcome, i) => (
                   <li key={i} className="flex items-start gap-4">
-                    <div className="mt-1 w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 flex-shrink-0">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
                       <CheckCircle2 className="w-4 h-4" />
                     </div>
                     <span className="text-on-surface-variant font-medium leading-snug">{outcome}</span>
@@ -167,9 +167,9 @@ const CourseDetail = ({ course, onBack, onSelectCourse }: CourseDetailProps) => 
                   key={l.code}
                   whileHover={{ y: -8 }}
                   onClick={() => onSelectCourse(l)}
-                  className="bg-white p-6 rounded-[2rem] border border-outline-variant/10 shadow-lg hover:shadow-2xl transition-all cursor-pointer group"
+                  className="bg-white dark:bg-[#1a1a1a] p-6 rounded-[2rem] border border-outline-variant/10 dark:border-white/8 shadow-lg hover:shadow-2xl transition-all cursor-pointer group"
                 >
-                  <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${l.color} flex items-center justify-center text-white text-xl font-black mb-4 group-hover:rotate-6 transition-transform`}>
+                  <div className={`w-12 h-12 rounded-2xl bg-linear-to-br ${l.color} flex items-center justify-center text-white text-xl font-black mb-4 group-hover:rotate-6 transition-transform`}>
                     {idx >= 0 ? idx + 1 : 1}
                   </div>
                   <h4 className="text-xl font-black font-headline mb-2">{l.title}</h4>

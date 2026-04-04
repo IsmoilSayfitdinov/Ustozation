@@ -49,7 +49,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ease-in-out ${
         scrolled
-          ? 'mt-4 mx-4 md:mx-8 lg:mx-12 py-3 bg-white/70 glass-nav premium-shadow rounded-2xl'
+          ? 'mt-4 mx-4 md:mx-8 lg:mx-12 py-3 bg-white/70 dark:bg-[#1a1a1a]/80 glass-nav premium-shadow rounded-2xl'
           : 'py-6 bg-transparent'
       }`}
     >
@@ -67,7 +67,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
           {/* Desktop Links */}
           <div className="hidden lg:flex items-center gap-10">
             {NAV_LINKS.map((link) => (
-              <a key={link.href} href={link.href} className="text-on-surface-variant font-headline font-bold text-[13px] uppercase tracking-[0.15em] hover:text-primary transition-all duration-300 relative group py-2">
+              <a key={link.href} href={link.href} className="text-[#667085] dark:text-[#d1d5db] font-headline font-bold text-[13px] uppercase tracking-[0.15em] hover:text-primary transition-all duration-300 relative group py-2">
                 <span className="relative z-10">{link.label}</span>
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-500 group-hover:w-full" />
               </a>
@@ -79,7 +79,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
             {/* Language Toggle */}
             <button
               onClick={toggleLang}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/30 bg-white/80 backdrop-blur-sm text-on-surface font-bold text-xs uppercase tracking-wider hover:border-primary/30 hover:bg-primary/5 transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#E4E7EC] dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-sm text-[#141F38] dark:text-white font-bold text-xs uppercase tracking-wider hover:border-primary/30 hover:bg-primary/5 transition-all"
             >
               <Globe className="w-4 h-4 text-primary" />
               {i18n.language === 'uz' ? 'EN' : 'UZ'}
@@ -98,7 +98,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
           <div className="flex items-center gap-2 lg:hidden">
             <button
               onClick={toggleLang}
-              className="p-2.5 rounded-xl border border-outline-variant/20 bg-white/60 text-on-surface font-black text-[11px] uppercase"
+              className="p-2.5 rounded-xl border border-outline-variant/20 dark:border-white/15 bg-white/60 dark:bg-white/10 text-on-surface dark:text-white font-black text-[11px] uppercase"
             >
               {i18n.language === 'uz' ? 'EN' : 'UZ'}
             </button>
@@ -124,7 +124,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
       />
 
       {/* Mobile Menu */}
-      <div className={`lg:hidden fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-white/95 backdrop-blur-2xl z-50 shadow-[0_0_80px_rgba(0,0,0,0.15)] transition-all duration-700 flex flex-col will-change-transform ${
+      <div className={`lg:hidden fixed top-0 right-0 bottom-0 w-[85%] max-w-[400px] bg-white/95 dark:bg-[#1a1a1a]/95 backdrop-blur-2xl z-50 shadow-[0_0_80px_rgba(0,0,0,0.15)] transition-all duration-700 flex flex-col will-change-transform ${
         menuOpen ? 'translate-x-0 rounded-l-[40px]' : 'translate-x-full rounded-l-none'
       }`}>
         <div className="flex flex-col p-10 pt-28 gap-6 overflow-y-auto h-full relative">
@@ -135,7 +135,7 @@ const Navbar = ({ onAuth }: NavbarProps) => {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className={`text-on-surface-variant font-headline font-black text-xl uppercase tracking-widest hover:text-primary transition-all duration-500 py-4 border-b border-outline-variant/5 flex items-center justify-between group ${
+              className={`text-[#667085] dark:text-[#d1d5db] font-headline font-black text-xl uppercase tracking-widest hover:text-primary transition-all duration-500 py-4 border-b border-[#F2F4F7] dark:border-white/5 flex items-center justify-between group ${
                 menuOpen ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
               }`}
               style={{ transitionDelay: `${index * 70}ms` }}

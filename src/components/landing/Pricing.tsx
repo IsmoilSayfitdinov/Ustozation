@@ -46,7 +46,7 @@ const Pricing = ({ plans }: PricingProps) => {
   }, [plans]);
 
   return (
-    <section className="py-16 md:py-36 relative overflow-hidden bg-white" id="pricing">
+    <section className="py-16 md:py-36 relative overflow-hidden bg-white dark:bg-[#0a0a0a]" id="pricing">
       {/* Background */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full pointer-events-none opacity-30" style={{ background: 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)' }} />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] rounded-full pointer-events-none opacity-30" style={{ background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)' }} />
@@ -55,7 +55,7 @@ const Pricing = ({ plans }: PricingProps) => {
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 relative z-10">
         {/* Header */}
         <div className="text-center mb-16 md:mb-24 space-y-5 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white text-primary text-sm font-bold tracking-tight shadow-md border border-primary/10">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-white/8 text-primary text-sm font-bold tracking-tight shadow-md border border-primary/10 dark:border-primary/20">
             <span className="material-symbols-outlined text-lg">local_fire_department</span>
             {t('pricing.badge')}
           </div>
@@ -125,7 +125,7 @@ const Pricing = ({ plans }: PricingProps) => {
             }
 
             return (
-              <div key={plan.id} className="bg-white p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/20 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 flex flex-col hover:-translate-y-1 h-full">
+              <div key={plan.id} className="bg-white dark:bg-[#1a1a1a] p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-outline-variant/20 dark:border-white/8 hover:border-primary/30 transition-all duration-500 hover:shadow-xl hover:shadow-primary/5 flex flex-col hover:-translate-y-1 h-full">
                 {/* Icon */}
                 <div className="w-12 h-12 bg-primary/8 rounded-2xl flex items-center justify-center text-primary mb-6">
                   <span className="material-symbols-outlined text-2xl">{plan.icon}</span>
@@ -153,7 +153,7 @@ const Pricing = ({ plans }: PricingProps) => {
                 </ul>
 
                 {/* CTA */}
-                <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/20 text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all cursor-pointer bg-white text-sm tracking-wide">
+                <button className="w-full py-4 rounded-xl font-bold font-headline border-2 border-outline-variant/20 dark:border-white/10 text-on-surface hover:bg-primary hover:text-white hover:border-primary transition-all cursor-pointer bg-white dark:bg-transparent text-sm tracking-wide">
                   {t('pricing.choose')}
                 </button>
               </div>

@@ -4,7 +4,7 @@ const CTA = () => {
   const { t } = useTranslation();
 
   return (
-    <section className="py-10 md:py-24 px-4 sm:px-6 md:px-12 lg:px-20">
+    <section className="py-10 md:py-24 px-4 sm:px-6 md:px-12 lg:px-20 dark:bg-[#0a0a0a]">
       <div className="w-full cta-gradient rounded-[2rem] md:rounded-[3rem] p-6 sm:p-10 md:p-16 lg:p-24 relative overflow-hidden text-center">
         <div className="absolute -top-20 -left-20 w-56 h-56 bg-primary/25 rounded-full blur-[80px] glow-pulse pointer-events-none"></div>
         <div className="absolute -bottom-20 -right-20 w-56 h-56 bg-primary/25 rounded-full blur-[80px] float-orb pointer-events-none"></div>

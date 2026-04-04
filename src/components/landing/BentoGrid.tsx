@@ -1,12 +1,12 @@
 const BentoGrid = () => {
   return (
-    <section className="py-16 md:py-32 relative overflow-hidden">
+    <section className="py-16 md:py-32 relative overflow-hidden dark:bg-[#0a0a0a]">
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-[120px] float-orb-delayed pointer-events-none"></div>
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 relative z-10">
         <h2 className="text-[2rem] sm:text-3xl md:text-4xl lg:text-5xl font-extrabold font-headline tracking-tight text-center mb-12 md:mb-20">Platforma imkoniyatlari</h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {/* Interaktiv darslar */}
-          <div className="lg:col-span-2 bg-[#fafaf9] p-5 md:p-9 rounded-3xl flex flex-col group hover:shadow-xl transition-all duration-500 border border-outline-variant/20">
+          <div className="lg:col-span-2 bg-[#fafaf9] dark:bg-[#1a1a1a] p-5 md:p-9 rounded-3xl flex flex-col group hover:shadow-xl transition-all duration-500 border border-outline-variant/20 dark:border-white/8">
             <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/8 rounded-xl flex items-center justify-center text-primary mb-4 md:mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-300">
               <span className="material-symbols-outlined text-2xl md:text-3xl" style={{ fontVariationSettings: '"FILL" 1' }}>video_stable</span>
             </div>
@@ -41,7 +41,7 @@ const BentoGrid = () => {
           </div>
 
           {/* AI yordamchi */}
-          <div className="lg:col-span-2 bg-[#fafaf9] p-5 md:p-9 rounded-3xl border border-outline-variant/20 flex flex-col group hover:shadow-xl transition-all duration-500">
+          <div className="lg:col-span-2 bg-[#fafaf9] dark:bg-[#1a1a1a] p-5 md:p-9 rounded-3xl border border-outline-variant/20 dark:border-white/8 flex flex-col group hover:shadow-xl transition-all duration-500">
             <div className="w-12 h-12 md:w-14 md:h-14 bg-primary/8 rounded-xl flex items-center justify-center text-primary mb-4 md:mb-6 group-hover:bg-primary group-hover:text-white transition-all duration-300">
               <span className="material-symbols-outlined text-2xl md:text-3xl">psychology</span>
             </div>

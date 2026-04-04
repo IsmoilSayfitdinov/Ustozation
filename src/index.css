@@ -133,6 +133,25 @@
     linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
 }
 
+/* Landing page — carousel dots */
+.dark .bg-white\/60 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Landing page — floating cards */
+.dark .bg-white\/90 {
+  background-color: rgba(26, 26, 26, 0.9) !important;
+}
+
+.dark .bg-white\/95 {
+  background-color: rgba(26, 26, 26, 0.95) !important;
+}
+
+/* Landing page — pill badges */
+.dark .bg-\[\#F970151F\] {
+  background-color: rgba(249, 115, 22, 0.06) !important;
+}
+
 /* CTA gradient */
 .cta-gradient {
   background: linear-gradient(135deg, #1c1917 0%, #292524 30%, #44403c 60%, #1c1917 100%);

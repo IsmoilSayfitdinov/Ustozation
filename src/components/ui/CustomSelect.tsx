@@ -73,10 +73,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
           type="button"
           onClick={() => setIsOpen((prev) => !prev)}
           className={cn(
-            'w-full flex items-center justify-between px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-sm',
-            !selectedOption ? 'text-gray-400' : 'text-[#1C2434]',
+            'w-full flex items-center justify-between px-5 py-3.5 bg-[#F2F4F7] dark:bg-[#1a1a1a] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-sm dark:border dark:border-white/8',
+            !selectedOption ? 'text-gray-400 dark:text-[#52525b]' : 'text-[#1C2434] dark:text-white',
             error ? 'ring-2 ring-red-500/50' : '',
-            isOpen ? 'ring-2 ring-primary/20' : ''
+            isOpen ? 'ring-2 ring-primary/30' : ''
           )}
         >
           <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
@@ -104,10 +104,10 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                 width: coords.width,
                 zIndex: 9999,
               }}
-              className="bg-white rounded-xl shadow-2xl border border-gray-100 py-2 max-h-60 overflow-y-auto custom-scrollbar"
+              className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-100 dark:border-white/10 py-2 max-h-60 overflow-y-auto custom-scrollbar"
             >
               {options.length === 0 ? (
-                <div className="px-5 py-3 text-sm text-gray-500 text-center">Bo'sh</div>
+                <div className="px-5 py-3 text-sm text-gray-500 dark:text-[#71717a] text-center">Bo'sh</div>
               ) : (
                 options.map((option) => (
                   <button
@@ -118,8 +118,8 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
                       setIsOpen(false);
                     }}
                     className={cn(
-                      'w-full flex items-center justify-between px-5 py-2.5 text-sm font-medium transition-colors hover:bg-[#F2F4F7] text-left text-[#1C2434]',
-                      value === option.value ? 'bg-[#F2F4F7]/50 text-primary' : ''
+                      'w-full flex items-center justify-between px-5 py-2.5 text-sm font-medium transition-colors hover:bg-[#F2F4F7] dark:hover:bg-[#222222] text-left text-[#1C2434] dark:text-[#e5e7eb]',
+                      value === option.value ? 'bg-[#F2F4F7]/50 dark:bg-primary/10 text-primary' : ''
                     )}
                   >
                     <span className="truncate">{option.label}</span>

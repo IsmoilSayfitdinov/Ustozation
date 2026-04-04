@@ -20,6 +20,9 @@ const confirmSchema = z.object({
   path: ["new_password_confirm"],
 });
 
+const inputClass = "w-full px-5 py-3.5 bg-[#F2F4F7] dark:bg-[#1a1a1a] rounded-xl border border-transparent dark:border-white/8 outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium text-[#1C2434] dark:text-white text-sm placeholder:text-[#98A2B3] dark:placeholder:text-[#52525b]";
+const labelClass = "text-[11px] font-bold text-[#1C2434] dark:text-[#e5e7eb] ml-1 uppercase tracking-wider";
+
 const ForgotPassword = () => {
   const [step, setStep] = useState<'request' | 'confirm' | 'done'>('request');
   const requestMutation = useRequestPasswordReset();
@@ -38,15 +41,15 @@ const ForgotPassword = () => {
 
   return (
     <AuthLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-right duration-500 px-4 pb-8">
-        <div className="text-center space-y-3 pt-4">
-          <div className="w-16 h-16 bg-primary/10 rounded-2xl mx-auto flex items-center justify-center mb-4">
+      <div className="space-y-8 animate-in fade-in slide-in-from-right duration-500 bg-white dark:bg-[#111111] rounded-3xl p-8 md:p-10 border border-[#F2F4F7] dark:border-white/8 shadow-sm dark:shadow-none">
+        <div className="text-center space-y-3">
+          <div className="w-16 h-16 bg-primary/10 dark:bg-primary/15 rounded-2xl mx-auto flex items-center justify-center mb-4">
             <KeyRound className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold font-headline tracking-tighter text-[#141F38]">
+          <h1 className="text-2xl md:text-3xl font-extrabold font-headline tracking-tighter text-[#141F38] dark:text-white">
             {step === 'done' ? 'Parol tiklandi!' : 'Parolni tiklash'}
           </h1>
-          <p className="text-sm text-[#667085] font-medium">
+          <p className="text-sm text-[#667085] dark:text-[#a1a1aa] font-medium">
             {step === 'request' && "Username ingizni kiriting, biz sizga tiklash kodini beramiz"}
             {step === 'confirm' && "Tiklash kodini va yangi parolni kiriting"}
             {step === 'done' && "Endi yangi parol bilan tizimga kirishingiz mumkin"}
@@ -56,14 +59,12 @@ const ForgotPassword = () => {
         {step === 'request' && (
           <form className="space-y-5" onSubmit={requestForm.handleSubmit(handleRequest)}>
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">Username</label>
+              <label className={labelClass}>Username</label>
               <input
                 {...requestForm.register('username')}
                 type="text"
                 placeholder="Username ingizni kiriting"
-                className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] text-sm ${
-                  requestForm.formState.errors.username ? 'ring-2 ring-red-500/50' : ''
-                }`}
+                className={`${inputClass} ${requestForm.formState.errors.username ? 'ring-2 ring-red-500/50' : ''}`}
               />
               {requestForm.formState.errors.username && (
                 <p className="text-red-500 text-[10px] font-bold ml-1">{requestForm.formState.errors.username.message}</p>
@@ -72,7 +73,7 @@ const ForgotPassword = () => {
             <button
               type="submit"
               disabled={requestMutation.isPending}
-              className="w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-70"
+              className="w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-70 cursor-pointer border-none"
             >
               {requestMutation.isPending ? "Yuborilmoqda..." : "Kodni yuborish"}
             </button>
@@ -82,42 +83,36 @@ const ForgotPassword = () => {
         {step === 'confirm' && (
           <form className="space-y-5" onSubmit={confirmForm.handleSubmit(handleConfirm)}>
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">Tiklash kodi</label>
+              <label className={labelClass}>Tiklash kodi</label>
               <input
                 {...confirmForm.register('token')}
                 type="text"
                 placeholder="Kodini kiriting"
-                className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] text-sm ${
-                  confirmForm.formState.errors.token ? 'ring-2 ring-red-500/50' : ''
-                }`}
+                className={`${inputClass} ${confirmForm.formState.errors.token ? 'ring-2 ring-red-500/50' : ''}`}
               />
               {confirmForm.formState.errors.token && (
                 <p className="text-red-500 text-[10px] font-bold ml-1">{confirmForm.formState.errors.token.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">Yangi parol</label>
+              <label className={labelClass}>Yangi parol</label>
               <input
                 {...confirmForm.register('new_password')}
                 type="password"
                 placeholder="Kamida 8 ta belgi"
-                className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] text-sm ${
-                  confirmForm.formState.errors.new_password ? 'ring-2 ring-red-500/50' : ''
-                }`}
+                className={`${inputClass} ${confirmForm.formState.errors.new_password ? 'ring-2 ring-red-500/50' : ''}`}
               />
               {confirmForm.formState.errors.new_password && (
                 <p className="text-red-500 text-[10px] font-bold ml-1">{confirmForm.formState.errors.new_password.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <label className="text-[11px] font-bold text-[#1C2434] ml-1 uppercase tracking-wider">Parolni tasdiqlang</label>
+              <label className={labelClass}>Parolni tasdiqlang</label>
               <input
                 {...confirmForm.register('new_password_confirm')}
                 type="password"
                 placeholder="Parolni qayta kiriting"
-                className={`w-full px-5 py-3.5 bg-[#F2F4F7] rounded-xl border-none outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium text-[#1C2434] text-sm ${
-                  confirmForm.formState.errors.new_password_confirm ? 'ring-2 ring-red-500/50' : ''
-                }`}
+                className={`${inputClass} ${confirmForm.formState.errors.new_password_confirm ? 'ring-2 ring-red-500/50' : ''}`}
               />
               {confirmForm.formState.errors.new_password_confirm && (
                 <p className="text-red-500 text-[10px] font-bold ml-1">{confirmForm.formState.errors.new_password_confirm.message}</p>
@@ -126,7 +121,7 @@ const ForgotPassword = () => {
             <button
               type="submit"
               disabled={confirmMutation.isPending}
-              className="w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-70"
+              className="w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest hover:shadow-xl hover:shadow-primary/30 transition-all disabled:opacity-70 cursor-pointer border-none"
             >
               {confirmMutation.isPending ? "Tiklanmoqda..." : "Parolni tiklash"}
             </button>
@@ -135,12 +130,12 @@ const ForgotPassword = () => {
 
         {step === 'done' && (
           <div className="text-center space-y-6">
-            <div className="w-16 h-16 bg-[#E8FFF0] rounded-2xl mx-auto flex items-center justify-center">
+            <div className="w-16 h-16 bg-[#E8FFF0] dark:bg-green-500/15 rounded-2xl mx-auto flex items-center justify-center">
               <Check className="w-8 h-8 text-[#22C55E]" />
             </div>
             <Link
               to="/login"
-              className="block w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest text-center"
+              className="block w-full bg-primary text-white py-4 rounded-xl font-headline font-black text-sm uppercase tracking-widest text-center hover:shadow-xl hover:shadow-primary/30 transition-all"
             >
               Tizimga kirish
             </Link>
@@ -148,7 +143,7 @@ const ForgotPassword = () => {
         )}
 
         <div className="text-center">
-          <Link to="/login" className="text-[#667085] font-medium text-sm hover:text-primary flex items-center justify-center gap-2">
+          <Link to="/login" className="text-[#667085] dark:text-[#a1a1aa] font-medium text-sm hover:text-primary flex items-center justify-center gap-2 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Loginga qaytish
           </Link>
         </div>

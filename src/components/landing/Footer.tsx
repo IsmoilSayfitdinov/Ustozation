@@ -27,7 +27,7 @@ const Footer = ({ contact }: FooterProps) => {
   const instagram = contact?.instagram || '#';
 
   return (
-    <footer className="bg-[#fafaf9] border-t border-outline-variant/10 pt-16 md:pt-20 pb-8 md:pb-10">
+    <footer className="bg-[#fafaf9] dark:bg-[#0a0a0a] border-t border-outline-variant/10 dark:border-white/6 pt-16 md:pt-20 pb-8 md:pb-10">
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 grid sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-12 mb-16 md:mb-20">
         <div className="space-y-6">
           <div className="text-2xl font-black text-primary font-headline tracking-tighter italic">Ustozation</div>
@@ -35,13 +35,13 @@ const Footer = ({ contact }: FooterProps) => {
             {t('footer.description')}
           </p>
           <div className="flex gap-3">
-            <a className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={telegram} target="_blank" rel="noreferrer">
+            <a className="w-10 h-10 bg-white dark:bg-white/8 rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 dark:border-white/10 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={telegram} target="_blank" rel="noreferrer">
               <span className="material-symbols-outlined text-lg">send</span>
             </a>
-            <a className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={instagram} target="_blank" rel="noreferrer">
+            <a className="w-10 h-10 bg-white dark:bg-white/8 rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 dark:border-white/10 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={instagram} target="_blank" rel="noreferrer">
               <span className="material-symbols-outlined text-lg">alternate_email</span>
             </a>
-            <a className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={`mailto:${email}`}>
+            <a className="w-10 h-10 bg-white dark:bg-white/8 rounded-full flex items-center justify-center text-primary shadow-sm border border-outline-variant/15 dark:border-white/10 hover:bg-primary hover:text-white hover:border-primary transition-all duration-300" href={`mailto:${email}`}>
               <span className="material-symbols-outlined text-lg">mail</span>
             </a>
           </div>

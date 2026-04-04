@@ -1,5 +1,6 @@
 import type { LandingStats } from '@/types/api';
 import { useTranslation } from 'react-i18next';
+import { useThemeStore } from '@/store/useThemeStore';
 
 interface HeroProps {
   stats?: LandingStats;
@@ -7,9 +8,13 @@ interface HeroProps {
 
 const Hero = ({ stats }: HeroProps) => {
   const { t } = useTranslation();
+  const { isDark } = useThemeStore();
   return (
     <section className="relative pt-24 pb-16 lg:pt-32 lg:pb-24 overflow-hidden"
-      style={{ background: 'linear-gradient(135deg, #fffcf9 0%, #fff7ed 30%, #fefce8 60%, #fff1f2 80%, #f0f9ff 100%)' }}>
+      style={{ background: isDark
+        ? 'linear-gradient(135deg, #0a0a0a 0%, #141414 30%, #1a1a1a 60%, #111111 80%, #0a0a0a 100%)'
+        : 'linear-gradient(135deg, #fffcf9 0%, #fff7ed 30%, #fefce8 60%, #fff1f2 80%, #f0f9ff 100%)'
+      }}>
       
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 hero-hologram opacity-60 pointer-events-none"></div>
@@ -25,13 +30,13 @@ const Hero = ({ stats }: HeroProps) => {
         style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.15) 0%, transparent 70%)' }}></div>
 
       {/* Floating Elements (Icons & Geometry) to make space busy */}
-      <div className="absolute top-32 left-[48%] w-16 h-16 bg-white/60 backdrop-blur-md border border-white rounded-2xl shadow-xl rotate-12 flex items-center justify-center float-orb-delayed pointer-events-none z-0 text-primary">
+      <div className="absolute top-32 left-[48%] w-16 h-16 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white dark:border-white/15 rounded-2xl shadow-xl rotate-12 flex items-center justify-center float-orb-delayed pointer-events-none z-0 text-primary">
         <span className="material-symbols-outlined text-3xl">menu_book</span>
       </div>
-      <div className="absolute top-[60%] left-[5%] w-14 h-14 bg-white/60 backdrop-blur-md border border-white rounded-full shadow-xl -rotate-12 flex items-center justify-center float-orb pointer-events-none z-0 text-tertiary">
+      <div className="absolute top-[60%] left-[5%] w-14 h-14 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white dark:border-white/15 rounded-full shadow-xl -rotate-12 flex items-center justify-center float-orb pointer-events-none z-0 text-tertiary">
         <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: '"FILL" 1' }}>forum</span>
       </div>
-      <div className="absolute bottom-[20%] left-[45%] w-12 h-12 bg-white/60 backdrop-blur-md border border-white rounded-xl shadow-xl rotate-45 flex items-center justify-center glow-pulse pointer-events-none z-0 text-[#a855f7]">
+      <div className="absolute bottom-[20%] left-[45%] w-12 h-12 bg-white/60 dark:bg-white/10 backdrop-blur-md border border-white dark:border-white/15 rounded-xl shadow-xl rotate-45 flex items-center justify-center glow-pulse pointer-events-none z-0 text-[#a855f7]">
         <span className="material-symbols-outlined text-xl">psychology</span>
       </div>
       
@@ -45,7 +50,7 @@ const Hero = ({ stats }: HeroProps) => {
           
           {/* Left - Text content */}
           <div className="space-y-8 lg:space-y-10 py-6 relative z-20">
-            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white backdrop-blur-sm text-primary text-sm font-bold tracking-tight shadow-md border border-primary/20">
+            <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-white/10 backdrop-blur-sm text-primary text-sm font-bold tracking-tight shadow-md border border-primary/20 dark:border-primary/30">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
@@ -53,7 +58,7 @@ const Hero = ({ stats }: HeroProps) => {
               {t('hero.badge')}
             </div>
 
-            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[5rem] font-extrabold font-headline leading-[1.05] tracking-tight text-[#1c1917]">
+            <h1 className="text-[2.5rem] sm:text-5xl lg:text-[5rem] font-extrabold font-headline leading-[1.05] tracking-tight text-[#1c1917] dark:text-white">
               {t('hero.title_1')}{' '}
               <span className="relative inline-block">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary-dark to-[#f43f5e] italic pr-2">
@@ -66,7 +71,7 @@ const Hero = ({ stats }: HeroProps) => {
               {t('hero.title_3')}
             </h1>
 
-            <p className="text-lg lg:text-xl text-on-surface-variant max-w-lg leading-relaxed font-medium">
+            <p className="text-lg lg:text-xl text-[#667085] dark:text-[#a1a1aa] max-w-lg leading-relaxed font-medium">
               {t('hero.subtitle')}
             </p>
 
@@ -74,13 +79,13 @@ const Hero = ({ stats }: HeroProps) => {
               <button className="btn-shimmer text-white px-6 md:px-10 py-4 md:py-5 rounded-[1.25rem] font-headline font-extrabold text-base md:text-lg hover:shadow-2xl hover:shadow-primary/40 hover:-translate-y-1 transition-all duration-300 cursor-pointer border-none flex items-center justify-center gap-2 w-full sm:w-auto">
                 {t('hero.cta_free')} <span className="material-symbols-outlined text-xl">arrow_right_alt</span>
               </button>
-              <button className="bg-white/80 backdrop-blur-md text-on-surface px-6 md:px-10 py-4 md:py-5 rounded-[1.25rem] font-headline font-bold text-base md:text-lg hover:bg-white hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer border-2 border-outline-variant/30 flex items-center justify-center gap-2 w-full sm:w-auto">
+              <button className="bg-white/80 dark:bg-white/10 backdrop-blur-md text-[#141F38] dark:text-white px-6 md:px-10 py-4 md:py-5 rounded-[1.25rem] font-headline font-bold text-base md:text-lg hover:bg-white dark:hover:bg-white/20 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer border-2 border-[#E4E7EC] dark:border-white/10 flex items-center justify-center gap-2 w-full sm:w-auto">
                 <span className="material-symbols-outlined text-primary text-xl">play_circle</span> {t('hero.cta_video')}
               </button>
             </div>
 
             {/* Separated unified stats box to take up space beautifully */}
-            <div className="bg-white/90 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-xl border border-outline-variant/20 flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6 lg:gap-10 mt-6 lg:mt-8 relative group w-full sm:w-auto">
+            <div className="bg-white/90 dark:bg-[#1a1a1a]/90 backdrop-blur-xl rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-xl border border-[#E4E7EC] dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center gap-5 sm:gap-6 lg:gap-10 mt-6 lg:mt-8 relative group w-full sm:w-auto">
               <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-tertiary/20 to-purple-500/20 rounded-[2rem] blur opacity-60 group-hover:opacity-100 transition-opacity duration-500 -z-10"></div>
               
               <div className="flex items-center gap-4">
@@ -88,8 +93,8 @@ const Hero = ({ stats }: HeroProps) => {
                   <span className="material-symbols-outlined text-2xl">groups</span>
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-on-surface leading-none">{stats?.total_students ?? '1000'}+</div>
-                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">{t('hero.students')}</div>
+                  <div className="text-2xl font-black text-[#141F38] dark:text-white leading-none">{stats?.total_students ?? '1000'}+</div>
+                  <div className="text-[11px] text-[#98A2B3] dark:text-[#71717a] font-bold uppercase tracking-wider mt-1">{t('hero.students')}</div>
                 </div>
               </div>
               <div className="hidden sm:block w-px h-12 bg-on-surface/10"></div>
@@ -98,8 +103,8 @@ const Hero = ({ stats }: HeroProps) => {
                   <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>
                 </div>
                 <div>
-                  <div className="text-2xl font-black text-on-surface leading-none">{stats?.average_rating ? `${stats.average_rating}/5` : '4.9/5'}</div>
-                  <div className="text-[11px] text-on-surface-variant font-bold uppercase tracking-wider mt-1">{t('hero.rating')}</div>
+                  <div className="text-2xl font-black text-[#141F38] dark:text-white leading-none">{stats?.average_rating ? `${stats.average_rating}/5` : '4.9/5'}</div>
+                  <div className="text-[11px] text-[#98A2B3] dark:text-[#71717a] font-bold uppercase tracking-wider mt-1">{t('hero.rating')}</div>
                 </div>
               </div>
             </div>
@@ -121,29 +126,29 @@ const Hero = ({ stats }: HeroProps) => {
             </div>
 
             {/* Floating skill pills */}
-            <div className="absolute top-[5%] md:top-[10%] left-0 sm:left-2 md:left-[0%] bg-white/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white font-bold text-[#1c1917] flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 float-orb text-xs md:text-base scale-90 sm:scale-100 origin-left">
+            <div className="absolute top-[5%] md:top-[10%] left-0 sm:left-2 md:left-[0%] bg-white/95 dark:bg-[#1f1f1f]/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white/80 dark:border-white/15 font-bold text-[#1c1917] dark:text-white flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 float-orb text-xs md:text-base scale-90 sm:scale-100 origin-left">
               <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Speaking Club
             </div>
             
-            <div className="absolute top-[35%] md:top-[40%] right-0 sm:right-2 md:right-[0%] bg-white/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white font-bold text-[#1c1917] flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 float-orb-delayed text-xs md:text-base scale-90 sm:scale-100 origin-right">
+            <div className="absolute top-[35%] md:top-[40%] right-0 sm:right-2 md:right-[0%] bg-white/95 dark:bg-[#1f1f1f]/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white/80 dark:border-white/15 font-bold text-[#1c1917] dark:text-white flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 float-orb-delayed text-xs md:text-base scale-90 sm:scale-100 origin-right">
               <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> IELTS 8.5+ 
             </div>
 
-            <div className="absolute bottom-[20%] md:bottom-[30%] left-0 sm:left-0 md:left-[-10%] bg-white/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white font-bold text-[#1c1917] flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 glow-pulse text-xs md:text-base scale-90 sm:scale-100 origin-left">
+            <div className="absolute bottom-[20%] md:bottom-[30%] left-0 sm:left-0 md:left-[-10%] bg-white/95 dark:bg-[#1f1f1f]/90 backdrop-blur-md px-3 md:px-5 py-2 md:py-3 rounded-full shadow-lg border border-white/80 dark:border-white/15 font-bold text-[#1c1917] dark:text-white flex items-center gap-2 hover:scale-110 transition-transform cursor-default z-20 glow-pulse text-xs md:text-base scale-90 sm:scale-100 origin-left">
               <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Mock Exam
             </div>
 
             {/* Floating Card - Big success badge */}
-            <div className="absolute top-2 md:top-4 right-2 md:right-10 bg-white/95 backdrop-blur-xl rounded-3xl md:rounded-[2rem] p-3 md:p-5 shadow-2xl border border-white flex flex-col items-center gap-1 md:gap-2 z-20 float-orb-delayed transform rotate-3 scale-90 md:scale-100">
+            <div className="absolute top-2 md:top-4 right-2 md:right-10 bg-white/95 dark:bg-[#1f1f1f]/95 backdrop-blur-xl rounded-3xl md:rounded-[2rem] p-3 md:p-5 shadow-2xl border border-white/80 dark:border-white/15 flex flex-col items-center gap-1 md:gap-2 z-20 float-orb-delayed transform rotate-3 scale-90 md:scale-100">
               <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-600 rounded-[1.25rem] flex items-center justify-center text-white shadow-inner mb-1">
                 <span className="material-symbols-outlined text-3xl">trending_up</span>
               </div>
-              <div className="text-3xl font-black text-on-surface leading-none">98%</div>
-              <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest text-center">Muvaffaqiyat<br/>ko'rsatkichi</div>
+              <div className="text-3xl font-black text-[#141F38] dark:text-white leading-none">98%</div>
+              <div className="text-[10px] font-bold text-[#98A2B3] dark:text-[#9ca3af] uppercase tracking-widest text-center">Muvaffaqiyat<br/>ko'rsatkichi</div>
             </div>
 
             {/* Floating Card - Teachers team at bottom */}
-            <div className="absolute bottom-4 md:bottom-10 right-4 sm:-right-8 bg-white/95 backdrop-blur-xl rounded-full pl-2 md:pl-3 pr-4 md:pr-6 py-2 md:py-3 shadow-2xl border border-white flex items-center gap-3 md:gap-4 z-20 float-orb hover:shadow-primary/20 transition-all scale-90 md:scale-100 origin-bottom-right">
+            <div className="absolute bottom-4 md:bottom-10 right-4 sm:-right-8 bg-white/95 dark:bg-[#1f1f1f]/95 backdrop-blur-xl rounded-full pl-2 md:pl-3 pr-4 md:pr-6 py-2 md:py-3 shadow-2xl border border-white dark:border-white/15 flex items-center gap-3 md:gap-4 z-20 float-orb hover:shadow-primary/20 transition-all scale-90 md:scale-100 origin-bottom-right">
               <div className="flex -space-x-3">
                 <div className="w-12 h-12 rounded-full border-[3px] border-white overflow-hidden shadow-sm">
                   <img className="w-full h-full object-cover" loading="lazy" width={48} height={48} src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgFLJAlrv4R9TylkrtWjqG_9WTvODWEP_5HMW3LNH9CQauTgVYARAGoUz6vrqD6cVkJ30UkYo2xmk1pQ-R_1dj_l5BT70L2CpQdpHC9WPkjZVEWLlsZ3CkJvhnrCUq_O2fgT51QWn9ihFD5gWJBEC8fig10786zr8nHoiESzuoX96i8BcpKJRQRNzeuSv7AmOY-i-6ZkDr4AYl7y6JNRulof6YhaAR3Fg4t6frwFaRSIFVPT9y30fjvC3VHFrQFnuDVbfH068d_3g" alt="Teacher" />
@@ -154,7 +159,7 @@ const Hero = ({ stats }: HeroProps) => {
                 <div className="w-12 h-12 rounded-full border-[3px] border-white bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center font-bold text-xs shadow-inner">+15</div>
               </div>
               <div>
-                <p className="text-sm font-black text-on-surface">{t('hero.team')}</p>
+                <p className="text-sm font-black text-[#141F38] dark:text-white">{t('hero.team')}</p>
                 <div className="flex items-center gap-1 text-[#fbbf24]">
                   {[1,2,3,4,5].map(i => <span key={i} className="material-symbols-outlined text-sm" style={{ fontVariationSettings: '"FILL" 1' }}>star</span>)}
                 </div>

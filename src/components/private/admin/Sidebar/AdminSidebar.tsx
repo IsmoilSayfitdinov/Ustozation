@@ -68,7 +68,7 @@ const AdminSidebar = ({ isOpen = false, onClose }: AdminSidebarProps) => {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-2 overflow-y-auto scrollbar-hide">
         {menuItems.map((item, index) => (
           <SidebarItem
             key={index}

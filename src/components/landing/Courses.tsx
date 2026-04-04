@@ -41,7 +41,7 @@ const Courses = ({ onSelect }: CoursesProps) => {
   };
 
   return (
-    <section className="py-16 md:py-36 bg-[#fafaf9] relative overflow-hidden" id="courses">
+    <section className="py-16 md:py-36 bg-[#fafaf9] dark:bg-[#0a0a0a] relative overflow-hidden" id="courses">
       {/* Background decorations */}
       <div className="absolute top-0 right-0 w-full h-full pointer-events-none opacity-[0.03]"
            style={{ backgroundImage: 'radial-gradient(#F97316 2px, transparent 2px)', backgroundSize: '30px 30px' }}>
@@ -51,7 +51,7 @@ const Courses = ({ onSelect }: CoursesProps) => {
 
       <div className="w-full mx-auto px-6 md:px-12 lg:px-20 relative z-10">
         <div className="text-center mb-16 md:mb-24 space-y-4 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-bold tracking-tight shadow-sm border border-outline-variant/20 mb-2 hover:bg-primary/5 transition-colors cursor-pointer">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-white/8 text-primary text-sm font-bold tracking-tight shadow-sm border border-outline-variant/20 dark:border-white/10 mb-2 hover:bg-primary/5 transition-colors cursor-pointer">
             <span className="material-symbols-outlined text-lg" style={{ fontVariationSettings: '"FILL" 1' }}>route</span>
             {t('courses.badge')}
           </div>
@@ -81,14 +81,14 @@ const Courses = ({ onSelect }: CoursesProps) => {
           <div className="grid grid-cols-5 gap-6">
             {levels.map((l, idx) => (
               <div key={l.code} className="relative group flex flex-col items-center">
-                <div className="relative z-10 w-6 h-6 rounded-full bg-white border-4 border-surface flex items-center justify-center mb-8 shadow-md transition-all duration-500 group-hover:scale-[1.8] group-hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)]">
+                <div className="relative z-10 w-6 h-6 rounded-full bg-white dark:bg-[#2a2a2a] border-4 border-surface dark:border-[#0a0a0a] flex items-center justify-center mb-8 shadow-md transition-all duration-500 group-hover:scale-[1.8] group-hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.5)]">
                   <div className={`w-3 h-3 rounded-full bg-gradient-to-br ${l.color} animate-pulse`}></div>
                   <div className="absolute -inset-2 rounded-full border-2 border-primary/30 opacity-0 group-hover:animate-ping"></div>
                 </div>
 
                 <div
                   onClick={() => handleSelect(l)}
-                  className={`mt-2 w-full bg-white p-6 rounded-3xl transition-all duration-500 border border-outline-variant/20 hover:-translate-y-4 hover:border-transparent relative z-20 shadow-lg ${l.shadow} hover:shadow-2xl cursor-pointer group-hover:border-primary/50`}
+                  className={`mt-2 w-full bg-white dark:bg-[#1a1a1a] p-6 rounded-3xl transition-all duration-500 border border-outline-variant/20 dark:border-white/8 hover:-translate-y-4 hover:border-transparent relative z-20 shadow-lg ${l.shadow} hover:shadow-2xl cursor-pointer group-hover:border-primary/50`}
                 >
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${l.color} flex items-center justify-center text-white mb-6 shadow-lg shadow-black/10 transform transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110`}>
                     <span className="material-symbols-outlined text-3xl" style={{ fontVariationSettings: '"FILL" 1' }}>{l.icon}</span>
@@ -131,9 +131,9 @@ const Courses = ({ onSelect }: CoursesProps) => {
             <div
               key={l.code}
               onClick={() => handleSelect(l)}
-              className="relative bg-white p-6 rounded-3xl border border-outline-variant/20 shadow-md flex flex-col hover:-translate-y-2 transition-transform hover:shadow-xl group/card z-10 cursor-pointer"
+              className="relative bg-white dark:bg-[#1a1a1a] p-6 rounded-3xl border border-outline-variant/20 dark:border-white/8 shadow-md flex flex-col hover:-translate-y-2 transition-transform hover:shadow-xl group/card z-10 cursor-pointer"
             >
-              <div className="absolute top-10 -left-[35px] w-5 h-5 rounded-full bg-white border-4 border-surface flex items-center justify-center shadow-md transition-transform duration-300 group-hover/card:scale-150 group-hover/card:shadow-[0_0_10px_rgba(249,115,22,0.4)]">
+              <div className="absolute top-10 -left-[35px] w-5 h-5 rounded-full bg-white dark:bg-[#2a2a2a] border-4 border-surface dark:border-[#0a0a0a] flex items-center justify-center shadow-md transition-transform duration-300 group-hover/card:scale-150 group-hover/card:shadow-[0_0_10px_rgba(249,115,22,0.4)]">
                 <div className={`w-2.5 h-2.5 rounded-full bg-gradient-to-br ${l.color} animate-pulse`}></div>
               </div>
 

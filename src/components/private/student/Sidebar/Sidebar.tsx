@@ -57,7 +57,7 @@ const Sidebar = ({ isOpen = false, onClose }: SidebarProps) => {
         </button>
       </div>
 
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-2 overflow-y-auto scrollbar-hide">
         {menuItems.map((item, index) => (
           <SidebarItem
             key={index}

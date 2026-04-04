@@ -18,7 +18,7 @@ function SplashScreen() {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.02 }}
       transition={{ duration: 0.5, ease: 'easeInOut' }}
-      className="fixed inset-0 z-[9999] bg-white flex flex-col items-center justify-center"
+      className="fixed inset-0 z-9999 bg-white dark:bg-[#0a0a0a] flex flex-col items-center justify-center"
     >
       <motion.div
         initial={{ scale: 0.7, opacity: 0 }}
@@ -34,7 +34,7 @@ function SplashScreen() {
           initial={{ width: '0%' }}
           animate={{ width: '100%' }}
           transition={{ duration: 2, ease: 'easeInOut' }}
-          className="h-full bg-gradient-to-r from-primary via-primary-dark to-primary rounded-full"
+          className="h-full bg-linear-to-r from-primary via-primary-dark to-primary rounded-full"
         />
       </div>
 
@@ -42,7 +42,7 @@ function SplashScreen() {
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4, duration: 0.5 }}
-        className="mt-6 text-[11px] font-bold text-[#C0C5CD] uppercase tracking-[0.3em]"
+        className="mt-6 text-[11px] font-bold text-[#C0C5CD] dark:text-[#52525b] uppercase tracking-[0.3em]"
       >
         Yuklanmoqda...
       </motion.p>
@@ -86,7 +86,7 @@ function Parent() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
-          className="bg-white min-w-full text-on-surface font-body selection:bg-primary/20 selection:text-primary"
+          className="bg-white dark:bg-[#0a0a0a] min-w-full text-on-surface font-body selection:bg-primary/20 selection:text-primary"
         >
           <Navbar />
           <Hero stats={landing?.stats} />
