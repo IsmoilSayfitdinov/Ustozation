@@ -15,7 +15,7 @@ const ProfileHero = ({ user, dashboard }: ProfileHeroProps) => {
     <div className="bg-white p-5 md:p-6 rounded-[28px] md:rounded-[32px] border border-[#F2F4F7] shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 hover:shadow-lg transition-all duration-300">
       <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
         <div className="relative">
-          <div className="w-16 h-16 md:w-[88px] md:h-[88px] bg-primary rounded-[20px] md:rounded-[28px] flex items-center justify-center text-white text-3xl md:text-4xl font-black shadow-lg shadow-primary/20">
+          <div className="w-16 h-16 md:w-[88px] md:h-[88px] bg-primary dark:bg-orange-500 rounded-[20px] md:rounded-[28px] flex items-center justify-center text-white text-3xl md:text-4xl font-black shadow-lg shadow-primary/20">
             {avatarText}
           </div>
           <div className="absolute -bottom-2 -right-2 bg-white rounded-full p-1.5 shadow-sm border border-gray-100">
