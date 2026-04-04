@@ -45,7 +45,7 @@ const ProfileHero = ({ user, dashboard }: ProfileHeroProps) => {
               );
             })()}
             <span className="text-xs md:text-sm font-semibold text-[#8C94A3]">
-              Level {dashboard?.course_name ? dashboard.course_name : 'N/A'} - {dashboard?.course_name ? 'Elementary' : ''}
+              Level {dashboard?.course_name ? dashboard.course_name : 'N/A'}
             </span>
           </div>
           <p className="text-[#8C94A3] text-xs md:text-sm italic">
