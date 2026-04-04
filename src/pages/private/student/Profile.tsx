@@ -10,6 +10,7 @@ import { useCourses } from '@/hooks/useCourses';
 import { LogOut as LogOutIcon } from 'lucide-react';
 import { useDashboard } from '@/hooks/useAnalytics';
 import { useStreak, useBadges, useMyBadges } from '@/hooks/useGamification';
+import { getMedal, getStreakMedal } from '@/lib/medals';
 
 const BADGE_ICONS: Record<string, string> = {
   first_quiz: '🏆',
@@ -147,10 +148,13 @@ const Profile = () => {
   const lastName = nameParts.slice(1).join(' ') || '';
   const avatar = firstName.charAt(0).toUpperCase() || 'U';
 
+  const rankMedal = dashboard?.rank ? getMedal(dashboard.rank) : null;
+  const streakMedal = getStreakMedal(streak?.current_streak ?? 0);
+
   const stats = [
-    { label: 'Streak', value: `${streak?.current_streak ?? 0} kun`, icon: Flame },
+    { label: 'Streak', value: streakMedal ? `${streakMedal.emoji} ${streak?.current_streak ?? 0} kun` : `${streak?.current_streak ?? 0} kun`, icon: Flame },
     { label: 'Testlar', value: `${dashboard?.total_quizzes_passed ?? 0} topshirildi`, icon: BookOpen },
-    { label: 'Reyting', value: dashboard?.rank ? `#${dashboard.rank}` : '—', icon: Trophy },
+    { label: 'Reyting', value: rankMedal ? `${rankMedal.emoji} ${rankMedal.label}` : dashboard?.rank ? `#${dashboard.rank}` : '—', icon: Trophy },
     { label: 'O\'rtacha ball', value: `${Math.round(dashboard?.average_score ?? 0)}%`, icon: BarChart3 },
     { label: 'Qo\'shilgan', value: user?.date_joined ? new Date(user.date_joined).getFullYear() + '-yil' : '—', icon: Clock },
   ];

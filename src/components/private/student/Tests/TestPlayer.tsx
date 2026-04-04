@@ -3,6 +3,7 @@ import { Timer, ArrowRight, ArrowLeft, Trophy, ChevronDown, ChevronUp, AlertTria
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizDetail, useStartAttempt, useSubmitAttempt } from '@/hooks/useQuizzes';
 import { useInsights } from '@/hooks/useAnalytics';
+import { getScoreMedal } from '@/lib/medals';
 import type { SubmitAnswerPayload } from '@/types/api';
 
 interface TestPlayerProps {
@@ -539,8 +540,8 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                   <ArrowLeft className="w-4 h-4" /> Oldingi
                 </button>
 
-                {/* Question dots */}
-                <div className="hidden md:flex items-center gap-1.5">
+                {/* Question dots — mobilda scrollable */}
+                <div className="flex items-center gap-1.5 overflow-x-auto max-w-[40vw] md:max-w-none scrollbar-hide">
                   {questions.map((q, i) => (
                     <button
                       key={q.id}
@@ -603,12 +604,24 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
           >
             {/* Top Results Card */}
             <div className="bg-white p-8 md:p-10 rounded-[40px] border border-[#F2F4F7] shadow-sm text-center">
-              <div className="w-16 h-16 bg-[#F8F9FA] rounded-2xl mx-auto flex items-center justify-center text-3xl mb-4 shadow-sm">
-                {result?.is_passed ? '🎉' : '😔'}
-              </div>
+              {(() => {
+                const scoreMedal = getScoreMedal(scorePercent);
+                return (
+                  <>
+                    <div className="w-20 h-20 rounded-2xl mx-auto flex items-center justify-center text-4xl mb-4 shadow-sm" style={{ backgroundColor: scoreMedal ? `${scoreMedal.color}15` : '#F8F9FA' }}>
+                      {scoreMedal ? scoreMedal.emoji : result?.is_passed ? '🎉' : '😔'}
+                    </div>
+                    {scoreMedal && (
+                      <div className={`inline-block px-4 py-1.5 rounded-full text-xs font-black mb-2 ${scoreMedal.bg}`} style={{ color: scoreMedal.color }}>
+                        {scoreMedal.label} natija!
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               <h2 className="text-2xl font-black text-[#141F38]">Natija</h2>
               <p className="text-[#667085] text-sm mt-1 mb-4 font-bold tracking-tight">
-                 {result?.is_passed ? "Tabriklaymiz! Siz o'tdingiz!" : "Afsuski, yetarli ball to'play olmadingiz."}
+                 {scorePercent >= 90 ? "Ajoyib! Zo'r natija!" : result?.is_passed ? "Tabriklaymiz! Siz o'tdingiz!" : "Afsuski, yetarli ball to'play olmadingiz."}
               </p>
               
               <div className="flex items-center justify-center gap-3 mb-8">
@@ -648,8 +661,8 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 </div>
               </div>
 
-              {/* Retry info */}
-              {quiz && (
+              {/* Retry info — faqat o'tmagan bo'lsa */}
+              {quiz && !result?.is_passed && (
                 <div className="bg-[#FFF6ED] border border-[#FDBA74]/30 rounded-2xl p-4 max-w-sm mx-auto w-full">
                   <p className="text-xs font-bold text-[#141F38] text-center">
                     Qayta topshirish mumkin — har safar <span className="text-[#F97316]">-{quiz.penalty_per_retake} ball</span> kamayadi
@@ -657,7 +670,17 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                 </div>
               )}
 
+              {result?.is_passed && (
+                <div className="bg-[#E8FFF0] border border-[#22C55E]/20 rounded-2xl p-4 max-w-sm mx-auto w-full">
+                  <p className="text-xs font-bold text-[#22C55E] text-center">
+                    Tabriklaymiz! Siz bu testdan muvaffaqiyatli o'tdingiz. Qayta topshirish kerak emas.
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-3 max-w-sm mx-auto w-full">
+                {/* Qayta topshirish — faqat o'tmagan bo'lsa */}
+                {!result?.is_passed && (
                 <button
                   onClick={() => {
                     setState('start');
@@ -673,6 +696,7 @@ const TestPlayer = ({ quizId, onClose }: TestPlayerProps) => {
                   <RotateCcw className="w-4 h-4"/>
                   Qayta topshirish
                 </button>
+                )}
                 <button
                   onClick={onClose}
                   className="flex-1 bg-surface-tint hover:bg-[#EA580C] text-white py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 shadow-xl shadow-surface-tint/20 transition-all active:scale-[0.98]"

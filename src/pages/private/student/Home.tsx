@@ -12,9 +12,10 @@ import { StartTestCard, OverallScoreCard } from '@/components/private/student/Da
 
 import { useDashboard } from '@/hooks/useAnalytics';
 import { useStreak, useRanking } from '@/hooks/useGamification';
-import { useCourses } from '@/hooks/useCourses';
+import { useCourses, useCourseLessons } from '@/hooks/useCourses';
 import { useEnroll } from '@/hooks/useAuth';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useMemo } from 'react';
 
 const StudentHome = () => {
   const { data: dashboard, isLoading: dashLoading } = useDashboard();
@@ -23,6 +24,15 @@ const StudentHome = () => {
   const { data: courses } = useCourses();
   const enrollMutation = useEnroll();
   const { user } = useAuthStore();
+
+  // Kurs topish va darslar soni
+  const enrolledCourse = useMemo(() => {
+    if (!courses || !dashboard?.course_name) return null;
+    return courses.find(c => c.title === dashboard.course_name) ?? null;
+  }, [courses, dashboard]);
+  const { data: courseLessons } = useCourseLessons(enrolledCourse?.id ?? 0);
+  const totalLessons = courseLessons?.length ?? 0;
+  const unlockedLessons = courseLessons?.filter(l => l.is_unlocked).length ?? 0;
 
   const isLoading = dashLoading || streakLoading || rankingLoading;
   const hasNoCourse = !dashboard?.course_name;
@@ -171,8 +181,8 @@ const StudentHome = () => {
           <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-4 md:gap-6">
             <CurrentLessonCard
               title={dashboard?.course_name || "Kurs tanlanmagan"}
-              completed={dashboard?.total_quizzes_passed ?? 0}
-              total={dashboard?.total_quizzes_taken || 1}
+              completed={unlockedLessons}
+              total={totalLessons}
             />
             <StartTestCard />
             <OverallScoreCard score={Math.round(dashboard?.average_score ?? 0)} />

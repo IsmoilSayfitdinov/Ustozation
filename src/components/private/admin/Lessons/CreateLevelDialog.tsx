@@ -35,7 +35,7 @@ const CreateLevelDialog: React.FC<CreateLevelDialogProps> = ({ isOpen, onClose, 
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={handleClose} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full max-w-md bg-[#F9FAFB] rounded-[24px] shadow-2xl overflow-hidden flex flex-col">
+        <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }} className="relative w-full mx-4 sm:mx-0 sm:max-w-md bg-[#F9FAFB] rounded-[24px] shadow-2xl overflow-hidden flex flex-col">
           <div className="px-6 pt-6 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-[#141F38]">
               <Target className="w-5 h-5 text-[#F97316]" />

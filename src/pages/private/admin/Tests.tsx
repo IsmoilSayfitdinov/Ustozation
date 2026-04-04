@@ -26,6 +26,11 @@ const Tests = () => {
   const [selectedQuizId, setSelectedQuizId] = useState('');
   const [showCreateQuiz, setShowCreateQuiz] = useState(false);
 
+  // All tab filters
+  const [filterSearch, setFilterSearch] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterType, setFilterType] = useState('');
+
   // Course tab
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [selectedCourseQuizId, setSelectedCourseQuizId] = useState('');
@@ -51,11 +56,6 @@ const Tests = () => {
   const { data: courses } = useCourses();
   const { data: courseQuizzes, isLoading: courseQuizzesLoading } = useCourseQuizzes(Number(selectedCourseId) || 0);
   const selectedCourse = (courses ?? []).find(c => String(c.id) === selectedCourseId);
-  const courseLevelId = selectedCourse?.level?.id ?? 0;
-  const { data: courseLevelDetail } = useLevelDetail(courseLevelId);
-  const courseLessonOptions = (courseLevelDetail?.modules ?? []).flatMap(m =>
-    m.lessons.map(l => ({ label: `${m.title} → ${l.title}`, value: String(l.id) }))
-  );
   const activeQuizId = selectedQuizId || selectedCourseQuizId;
   const { data: quizDetail, isLoading: quizLoading } = useQuizDetail(Number(activeQuizId) || 0);
 
@@ -166,20 +166,69 @@ const Tests = () => {
           </div>
 
           {/* ===== ALL TESTS TAB ===== */}
-          {activeTab === 'all' && isAdmin && (
+          {activeTab === 'all' && isAdmin && (() => {
+            // Filter logic
+            const allQuizzes = allTemplateQuizzes ?? [];
+            const filtered = allQuizzes.filter(q => {
+              if (filterSearch && !q.title.toLowerCase().includes(filterSearch.toLowerCase())) return false;
+              if (filterType && String(q.quiz_type.id) !== filterType) return false;
+              return true;
+            });
+
+            return (
             <div className="space-y-6">
+              {/* Filter bar */}
+              <div className="bg-white p-5 rounded-[20px] border border-[#F2F4F7] shadow-sm">
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="flex-1 relative">
+                    <input
+                      type="text"
+                      value={filterSearch}
+                      onChange={(e) => setFilterSearch(e.target.value)}
+                      placeholder="Test qidirish..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-[#F9FAFB] rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primary/20 border-none"
+                    />
+                    <BookOpen className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#98A2B3]" />
+                  </div>
+                  <div className="w-full md:w-48">
+                    <CustomSelect
+                      options={[{ label: 'Barcha turlar', value: '' }, ...quizTypeOptions]}
+                      value={filterType}
+                      onChange={setFilterType}
+                      placeholder="Test turi"
+                    />
+                  </div>
+                  <div className="w-full md:w-48">
+                    <CustomSelect
+                      options={[{ label: 'Barcha levellar', value: '' }, ...levelOptions]}
+                      value={filterLevel}
+                      onChange={(val) => { setFilterLevel(val); setSelectedLevelId(val); }}
+                      placeholder="Level"
+                    />
+                  </div>
+                  {(filterSearch || filterType || filterLevel) && (
+                    <button
+                      onClick={() => { setFilterSearch(''); setFilterType(''); setFilterLevel(''); setSelectedLevelId(''); }}
+                      className="px-4 py-2.5 bg-[#F2F4F7] rounded-xl text-xs font-bold text-[#667085] hover:bg-[#E4E7EC] transition-colors shrink-0"
+                    >
+                      Tozalash
+                    </button>
+                  )}
+                </div>
+              </div>
+
               {/* Shablon testlar */}
               <div className="bg-white p-6 md:p-8 rounded-[24px] border border-[#F2F4F7] shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-[#1D2939] flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-primary" />
-                    Shablon testlar ({allTemplateQuizzes?.length ?? 0})
+                    Shablon testlar ({filtered.length})
                   </h3>
-                  <span className="text-[10px] font-bold text-[#98A2B3] bg-[#FFF7ED] text-primary px-2.5 py-1 rounded-full">Guruh yaratilganda klonlanadi</span>
+                  <span className="text-[10px] font-bold bg-[#FFF7ED] text-primary px-2.5 py-1 rounded-full">Guruh yaratilganda klonlanadi</span>
                 </div>
-                {allTemplateQuizzes && allTemplateQuizzes.length > 0 ? (
+                {filtered.length > 0 ? (
                   <div className="space-y-2">
-                    {allTemplateQuizzes.map(quiz => (
+                    {filtered.map(quiz => (
                       <div
                         key={quiz.id}
                         onClick={() => { setSelectedQuizId(String(quiz.id)); setStep('quiz-detail'); }}
@@ -259,7 +308,8 @@ const Tests = () => {
                 return <CourseQuizzes key={course.id} />;
               })}
             </div>
-          )}
+          );
+          })()}
 
           {/* ===== TEMPLATE TAB ===== */}
           {activeTab === 'template' && (

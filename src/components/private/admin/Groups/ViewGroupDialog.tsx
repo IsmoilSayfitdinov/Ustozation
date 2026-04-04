@@ -75,7 +75,7 @@ const ViewGroupDialog: React.FC<ViewGroupDialogProps> = ({ isOpen, onClose, grou
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute right-0 top-0 h-full w-full max-w-[500px] bg-white shadow-2xl flex flex-col"
+            className="absolute right-0 top-0 h-full w-full sm:max-w-[500px] bg-white shadow-2xl flex flex-col"
           >
             {/* Header */}
             <div className={cn("px-6 py-8 relative", bgClass)}>

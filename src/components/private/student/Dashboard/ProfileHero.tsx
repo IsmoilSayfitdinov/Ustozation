@@ -1,6 +1,7 @@
 import { Flame } from 'lucide-react';
 import type { User } from '@/types/api';
 import type { StudentDashboard } from '@/types/api';
+import { getMedal, getStreakMedal } from '@/lib/medals';
 
 interface ProfileHeroProps {
   user: User | null;
@@ -27,9 +28,22 @@ const ProfileHero = ({ user, dashboard }: ProfileHeroProps) => {
         <div className="flex flex-col">
           <h2 className="text-xl md:text-2xl font-black text-[#141F38] mb-1">{user?.profile?.full_name || user?.username || 'Foydalanuvchi'}</h2>
           <div className="flex items-center gap-2 mb-2">
-            <span className="px-2 py-0.5 rounded text-[10px] md:text-xs font-bold bg-[#3B82F6] text-white tracking-wide">
-              Top {dashboard?.rank || '?'}
-            </span>
+            {(() => {
+              const medal = dashboard?.rank ? getMedal(dashboard.rank) : null;
+              const streakM = getStreakMedal(dashboard?.current_streak || 0);
+              return (
+                <>
+                  <span className="px-2 py-0.5 rounded text-[10px] md:text-xs font-bold bg-[#3B82F6] text-white tracking-wide">
+                    {medal ? `${medal.emoji} ${medal.label}` : `Top ${dashboard?.rank || '?'}`}
+                  </span>
+                  {streakM && (
+                    <span className="px-2 py-0.5 rounded text-[10px] md:text-xs font-bold" style={{ backgroundColor: `${streakM.color}15`, color: streakM.color }}>
+                      {streakM.emoji} {streakM.label}
+                    </span>
+                  )}
+                </>
+              );
+            })()}
             <span className="text-xs md:text-sm font-semibold text-[#8C94A3]">
               Level {dashboard?.course_name ? dashboard.course_name : 'N/A'} - {dashboard?.course_name ? 'Elementary' : ''}
             </span>
